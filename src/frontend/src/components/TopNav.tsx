@@ -1,21 +1,43 @@
-import { Bell } from "lucide-react";
+import { Bell, LogOut } from "lucide-react";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
 
 interface TopNavProps {
   userPrincipal: string;
   onDeposit: () => void;
   activeTab: string;
   onTabChange: (tab: string) => void;
+  isAdmin?: boolean;
+  onLogout: () => void;
 }
 
-const NAV_LINKS = ["DASHBOARD", "TERMINAL", "PORTFOLIO", "ACTIVITY"];
+const BASE_NAV_LINKS = [
+  "DASHBOARD",
+  "TERMINAL",
+  "PORTFOLIO",
+  "ACTIVITY",
+  "WALLET",
+];
 
 export default function TopNav({
   userPrincipal,
   onDeposit,
   activeTab,
   onTabChange,
+  isAdmin = false,
+  onLogout,
 }: TopNavProps) {
-  const shortPrincipal = `${userPrincipal.slice(0, 6)}…${userPrincipal.slice(-4)}`;
+  const { clear } = useInternetIdentity();
+
+  const shortPrincipal = userPrincipal
+    ? `${userPrincipal.slice(0, 6)}\u2026${userPrincipal.slice(-4)}`
+    : "------";
+
+  const navLinks = isAdmin ? [...BASE_NAV_LINKS, "ADMIN"] : BASE_NAV_LINKS;
+
+  function handleLogout() {
+    clear();
+    onLogout();
+  }
 
   return (
     <header className="top-nav fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16">
@@ -52,8 +74,8 @@ export default function TopNav({
       </div>
 
       {/* Center Nav */}
-      <nav className="hidden md:flex items-center gap-8">
-        {NAV_LINKS.map((link) => (
+      <nav className="hidden md:flex items-center gap-4">
+        {navLinks.map((link) => (
           <button
             key={link}
             type="button"
@@ -61,16 +83,20 @@ export default function TopNav({
             onClick={() => onTabChange(link)}
             className={`text-xs font-bold tracking-[0.14em] uppercase transition-colors duration-200 pb-1 border-b-2 ${
               activeTab === link
-                ? "text-[#FF8C00] border-[#FF8C00]"
-                : "text-[#93A4B7] border-transparent hover:text-[#E6EDF3]"
+                ? link === "ADMIN"
+                  ? "text-red-400 border-red-400"
+                  : "text-[#FF8C00] border-[#FF8C00]"
+                : link === "ADMIN"
+                  ? "text-red-400/60 border-transparent hover:text-red-400"
+                  : "text-[#93A4B7] border-transparent hover:text-[#E6EDF3]"
             }`}
           >
-            {link}
+            {link === "ADMIN" ? "\u2699 ADMIN" : link}
           </button>
         ))}
       </nav>
 
-      {/* Right: wallet + notification */}
+      {/* Right: wallet + notification + logout */}
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -90,6 +116,11 @@ export default function TopNav({
           <span className="text-xs font-mono text-[#E6EDF3] tracking-wide">
             {shortPrincipal}
           </span>
+          {isAdmin && (
+            <span className="text-[9px] font-extrabold tracking-widest uppercase text-red-400 border border-red-400/40 rounded px-1 py-0.5">
+              ADMIN
+            </span>
+          )}
           <svg
             width="14"
             height="14"
@@ -117,6 +148,21 @@ export default function TopNav({
           <Bell size={18} />
           <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#FF8C00] rounded-full flex items-center justify-center">
             <span className="text-[7px] font-bold text-black">3</span>
+          </span>
+        </button>
+
+        {/* Logout button */}
+        <button
+          type="button"
+          data-ocid="nav.logout.button"
+          onClick={handleLogout}
+          aria-label="Logout"
+          title="Logout"
+          className="flex items-center gap-1.5 text-[#93A4B7] hover:text-red-400 transition-colors border border-transparent hover:border-red-400/30 rounded-lg px-2 py-1.5"
+        >
+          <LogOut size={15} />
+          <span className="hidden lg:inline text-[10px] font-bold tracking-widest uppercase">
+            LOGOUT
           </span>
         </button>
       </div>

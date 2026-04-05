@@ -10,7 +10,84 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export interface _SERVICE { 'greet' : ActorMethod<[], string> }
+export interface DepositInput {
+  'asset' : string,
+  'screenshotBlobId' : [] | [string],
+  'txid' : string,
+  'amount' : bigint,
+}
+export interface DepositOutput {
+  'id' : bigint,
+  'status' : DepositStatus,
+  'asset' : string,
+  'screenshotBlobId' : [] | [string],
+  'txid' : string,
+  'timestamp' : Time,
+  'amount' : bigint,
+}
+export type DepositStatus = { 'verified' : null } |
+  { 'pending' : null } |
+  { 'rejected' : null };
+export interface Faq { 'question' : string, 'answer' : string }
+export interface SiteStats {
+  'pendingCount' : bigint,
+  'approvedCount' : bigint,
+  'totalUsers' : bigint,
+  'totalDeposits' : bigint,
+  'rejectedCount' : bigint,
+}
+export type Time = bigint;
+export interface UserProfile { 'name' : string }
+export type UserRole = { 'admin' : null } |
+  { 'user' : null } |
+  { 'guest' : null };
+export interface _CaffeineStorageCreateCertificateResult {
+  'method' : string,
+  'blob_hash' : string,
+}
+export interface _CaffeineStorageRefillInformation {
+  'proposed_top_up_amount' : [] | [bigint],
+}
+export interface _CaffeineStorageRefillResult {
+  'success' : [] | [boolean],
+  'topped_up_amount' : [] | [bigint],
+}
+export interface _SERVICE {
+  '_caffeineStorageBlobIsLive' : ActorMethod<[Uint8Array], boolean>,
+  '_caffeineStorageBlobsToDelete' : ActorMethod<[], Array<Uint8Array>>,
+  '_caffeineStorageConfirmBlobDeletion' : ActorMethod<
+    [Array<Uint8Array>],
+    undefined
+  >,
+  '_caffeineStorageCreateCertificate' : ActorMethod<
+    [string],
+    _CaffeineStorageCreateCertificateResult
+  >,
+  '_caffeineStorageRefillCashier' : ActorMethod<
+    [[] | [_CaffeineStorageRefillInformation]],
+    _CaffeineStorageRefillResult
+  >,
+  '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
+  '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  'approveDeposit' : ActorMethod<[bigint], undefined>,
+  'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'getAllDeposits' : ActorMethod<[], Array<DepositOutput>>,
+  'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
+  'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getFAQs' : ActorMethod<[], Array<Faq>>,
+  'getMyDeposits' : ActorMethod<[], Array<DepositOutput>>,
+  'getPolicy' : ActorMethod<[], string>,
+  'getSiteStats' : ActorMethod<[], SiteStats>,
+  'getTerms' : ActorMethod<[], string>,
+  'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'isCallerAdmin' : ActorMethod<[], boolean>,
+  'rejectDeposit' : ActorMethod<[bigint], undefined>,
+  'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'setFAQs' : ActorMethod<[Array<Faq>], undefined>,
+  'setPolicy' : ActorMethod<[string], undefined>,
+  'setTerms' : ActorMethod<[string], undefined>,
+  'submitDeposit' : ActorMethod<[DepositInput], bigint>,
+}
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];
 export declare const idlFactory: IDL.InterfaceFactory;

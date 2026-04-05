@@ -16,10 +16,16 @@ const ASSET_COLORS: Record<string, string> = {
 export default function PortfolioOverview({
   deposits,
 }: PortfolioOverviewProps) {
-  const totalDeposited = deposits.reduce((s, d) => s + d.amount, 0);
+  // Only count Verified deposits for portfolio value
+  const verifiedDeposits = deposits.filter((d) => d.status === "Verified");
+  const totalPortfolioValue = verifiedDeposits.reduce(
+    (s, d) => s + d.amount,
+    0,
+  );
 
+  // ROI based on all active (verified) deposits
   let dailyEarnings = 0;
-  deposits.slice(0, 3).forEach((d, i) => {
+  verifiedDeposits.slice(0, 3).forEach((d, i) => {
     dailyEarnings += d.amount * (ROI_RATES[i] ?? 0);
   });
 
@@ -33,9 +39,9 @@ export default function PortfolioOverview({
 
   const stats = [
     {
-      label: "TOTAL DEPOSITED",
-      value: `£${totalDeposited.toLocaleString("en-GB", { minimumFractionDigits: 2 })}`,
-      sub: "portfolio value",
+      label: "PORTFOLIO VALUE",
+      value: `£${totalPortfolioValue.toLocaleString("en-GB", { minimumFractionDigits: 2 })}`,
+      sub: "verified deposits only",
       color: "#FF8C00",
     },
     {
@@ -52,8 +58,8 @@ export default function PortfolioOverview({
     },
     {
       label: "ACTIVE DEPOSITS",
-      value: String(deposits.length),
-      sub: "of 3 slots used",
+      value: String(verifiedDeposits.length),
+      sub: "verified & active",
       color: "#8B5CF6",
     },
   ];

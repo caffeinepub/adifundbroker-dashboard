@@ -1,20 +1,45 @@
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useActor } from "../hooks/useActor";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { getSecretParameter } from "../utils/urlParams";
 
 interface LoginPageProps {
-  onLogin: (principal: string) => void;
+  onLogin: (principal: string, isAdmin: boolean) => void;
 }
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, isLoggingIn, isLoginSuccess, identity } =
+    useInternetIdentity();
+  const { actor } = useActor();
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [hasAdminToken] = useState(() => {
+    const token = getSecretParameter("caffeineAdminToken");
+    return !!token;
+  });
 
-  function handleLogin() {
-    setIsLoading(true);
-    setTimeout(() => {
-      const fakePrincipal = "2vxsx-fae";
-      onLogin(fakePrincipal);
-    }, 1500);
-  }
+  useEffect(() => {
+    if (isLoginSuccess && identity && actor && !isRegistering) {
+      setIsRegistering(true);
+      const principal = identity.getPrincipal().toText();
+      actor
+        .saveCallerUserProfile({ name: principal })
+        .then(() => actor.isCallerAdmin())
+        .then((adminStatus) => {
+          onLogin(principal, adminStatus);
+        })
+        .catch((err) => {
+          console.error("Registration failed:", err);
+          // Fallback: log in without admin
+          onLogin(principal, false);
+        })
+        .finally(() => {
+          setIsRegistering(false);
+        });
+    }
+  }, [isLoginSuccess, identity, actor, onLogin, isRegistering]);
+
+  const isLoading = isLoggingIn || isRegistering;
 
   return (
     <div className="login-bg min-h-screen flex items-center justify-center relative overflow-hidden">
@@ -103,18 +128,36 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
           <div className="w-full h-px bg-gradient-to-r from-transparent via-[#FF8C00]/40 to-transparent" />
 
+          {/* Admin token detected banner */}
+          {hasAdminToken && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-red-400/40 bg-red-400/5"
+            >
+              <span className="w-2 h-2 rounded-full bg-red-400 shadow-[0_0_6px_#f87171] flex-shrink-0 animate-pulse" />
+              <p className="text-[11px] text-red-300 font-bold tracking-wide leading-relaxed">
+                Admin access token detected. Authenticate below to enter the
+                Admin Command Center.
+              </p>
+            </motion.div>
+          )}
+
           {/* ICP Login Button */}
           <button
             type="button"
             data-ocid="login.primary_button"
-            onClick={handleLogin}
+            onClick={login}
             disabled={isLoading}
             className="w-full cyber-btn-primary flex items-center justify-center gap-3 py-4 px-6 rounded-xl text-sm font-bold tracking-[0.14em] uppercase transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>
                 <div className="w-5 h-5 border-2 border-black/40 border-t-black rounded-full animate-spin" />
-                <span>AUTHENTICATING…</span>
+                <span>
+                  {isRegistering ? "REGISTERING\u2026" : "AUTHENTICATING\u2026"}
+                </span>
               </>
             ) : (
               <>
@@ -167,7 +210,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           <div className="w-full h-px bg-gradient-to-r from-transparent via-[#FF8C00]/20 to-transparent" />
 
           <p className="text-[#6B7C8F] text-xs text-center tracking-wide">
-            ⚠ Educational prototype — simulated environment only.
+            \u26a0 Educational prototype \u2014 simulated environment only.
             <br />
             No real transactions occur.
           </p>

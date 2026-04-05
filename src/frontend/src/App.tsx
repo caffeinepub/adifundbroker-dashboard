@@ -1,19 +1,23 @@
 import { Toaster } from "@/components/ui/sonner";
 import { useState } from "react";
 import { toast } from "sonner";
+import AdminPanel from "./components/AdminPanel";
 import Dashboard from "./components/Dashboard";
 import DepositModal from "./components/DepositModal";
 import LoginPage from "./components/LoginPage";
 import TopNav from "./components/TopNav";
+import WalletTab from "./components/WalletTab";
+import { useActor } from "./hooks/useActor";
 import { useDeposits } from "./hooks/useDeposits";
-
-const DEMO_PRINCIPAL = "2vxsx-fae-principal-demo";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userPrincipal, setUserPrincipal] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("DASHBOARD");
+
+  const { actor } = useActor();
 
   const {
     allDeposits,
@@ -22,18 +26,35 @@ export default function App() {
     remainingSlots,
     daysUntilReset,
     addDeposit,
-  } = useDeposits();
+    refreshDeposits,
+  } = useDeposits(actor, isAdmin);
 
-  function handleLogin(principal: string) {
-    setUserPrincipal(principal || DEMO_PRINCIPAL);
+  function handleLogin(principal: string, adminStatus: boolean) {
+    setUserPrincipal(principal);
+    setIsAdmin(adminStatus);
     setIsLoggedIn(true);
   }
 
-  function handleDeposit(asset: string, amount: number) {
-    addDeposit(asset, amount);
-    toast.success(`Deposit of £${amount} (${asset}) confirmed!`, {
-      description: "Your funds are being processed.",
+  function handleLogout() {
+    setIsLoggedIn(false);
+    setUserPrincipal("");
+    setIsAdmin(false);
+    setActiveTab("DASHBOARD");
+    setDepositOpen(false);
+    toast.success("Logged out successfully.");
+  }
+
+  async function handleDeposit(
+    asset: string,
+    amount: number,
+    txid?: string,
+    screenshotBlobId?: string,
+  ) {
+    await addDeposit(asset, amount, txid, screenshotBlobId);
+    toast.success(`Deposit of \u00a3${amount} (${asset}) submitted!`, {
+      description: "Awaiting manager verification.",
     });
+    await refreshDeposits();
   }
 
   if (!isLoggedIn) {
@@ -53,11 +74,23 @@ export default function App() {
         onDeposit={() => setDepositOpen(true)}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        isAdmin={isAdmin}
+        onLogout={handleLogout}
       />
-      <Dashboard
-        deposits={allDeposits}
-        onDeposit={() => setDepositOpen(true)}
-      />
+
+      <div className="dashboard-bg min-h-screen pt-16">
+        {activeTab === "WALLET" && <WalletTab deposits={allDeposits} />}
+        {activeTab === "ADMIN" && isAdmin && actor && (
+          <AdminPanel actor={actor} />
+        )}
+        {activeTab !== "WALLET" && activeTab !== "ADMIN" && (
+          <Dashboard
+            deposits={allDeposits}
+            onDeposit={() => setDepositOpen(true)}
+          />
+        )}
+      </div>
+
       <DepositModal
         isOpen={depositOpen}
         onClose={() => setDepositOpen(false)}
@@ -82,14 +115,14 @@ export default function App() {
           </span>
         </div>
         <p className="text-center">
-          © {new Date().getFullYear()}{" "}
+          \u00a9 {new Date().getFullYear()}{" "}
           <a
             href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-[#FF8C00] transition-colors"
           >
-            Built with ❤ using caffeine.ai
+            Built with \u2764 using caffeine.ai
           </a>
         </p>
         <div className="flex items-center gap-1.5">

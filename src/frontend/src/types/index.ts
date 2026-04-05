@@ -3,6 +3,11 @@ export interface Deposit {
   asset: string;
   amount: number;
   timestamp: number;
+  status: "Pending" | "Verified" | "Rejected";
+  txid?: string;
+  screenshotName?: string;
+  screenshotBlobId?: string;
+  userPrincipal?: string;
 }
 
 export interface AssetConfig {

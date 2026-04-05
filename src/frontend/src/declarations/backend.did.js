@@ -8,14 +8,206 @@
 
 import { IDL } from '@icp-sdk/core/candid';
 
+export const _CaffeineStorageCreateCertificateResult = IDL.Record({
+  'method' : IDL.Text,
+  'blob_hash' : IDL.Text,
+});
+export const _CaffeineStorageRefillInformation = IDL.Record({
+  'proposed_top_up_amount' : IDL.Opt(IDL.Nat),
+});
+export const _CaffeineStorageRefillResult = IDL.Record({
+  'success' : IDL.Opt(IDL.Bool),
+  'topped_up_amount' : IDL.Opt(IDL.Nat),
+});
+export const UserRole = IDL.Variant({
+  'admin' : IDL.Null,
+  'user' : IDL.Null,
+  'guest' : IDL.Null,
+});
+export const DepositStatus = IDL.Variant({
+  'verified' : IDL.Null,
+  'pending' : IDL.Null,
+  'rejected' : IDL.Null,
+});
+export const Time = IDL.Int;
+export const DepositOutput = IDL.Record({
+  'id' : IDL.Nat,
+  'status' : DepositStatus,
+  'asset' : IDL.Text,
+  'screenshotBlobId' : IDL.Opt(IDL.Text),
+  'txid' : IDL.Text,
+  'timestamp' : Time,
+  'amount' : IDL.Nat,
+});
+export const UserProfile = IDL.Record({ 'name' : IDL.Text });
+export const Faq = IDL.Record({ 'question' : IDL.Text, 'answer' : IDL.Text });
+export const SiteStats = IDL.Record({
+  'pendingCount' : IDL.Nat,
+  'approvedCount' : IDL.Nat,
+  'totalUsers' : IDL.Nat,
+  'totalDeposits' : IDL.Nat,
+  'rejectedCount' : IDL.Nat,
+});
+export const DepositInput = IDL.Record({
+  'asset' : IDL.Text,
+  'screenshotBlobId' : IDL.Opt(IDL.Text),
+  'txid' : IDL.Text,
+  'amount' : IDL.Nat,
+});
+
 export const idlService = IDL.Service({
-  'greet' : IDL.Func([], [IDL.Text], ['query']),
+  '_caffeineStorageBlobIsLive' : IDL.Func(
+      [IDL.Vec(IDL.Nat8)],
+      [IDL.Bool],
+      ['query'],
+    ),
+  '_caffeineStorageBlobsToDelete' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Vec(IDL.Nat8))],
+      ['query'],
+    ),
+  '_caffeineStorageConfirmBlobDeletion' : IDL.Func(
+      [IDL.Vec(IDL.Vec(IDL.Nat8))],
+      [],
+      [],
+    ),
+  '_caffeineStorageCreateCertificate' : IDL.Func(
+      [IDL.Text],
+      [_CaffeineStorageCreateCertificateResult],
+      [],
+    ),
+  '_caffeineStorageRefillCashier' : IDL.Func(
+      [IDL.Opt(_CaffeineStorageRefillInformation)],
+      [_CaffeineStorageRefillResult],
+      [],
+    ),
+  '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
+  '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+  'approveDeposit' : IDL.Func([IDL.Nat], [], []),
+  'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'getAllDeposits' : IDL.Func([], [IDL.Vec(DepositOutput)], ['query']),
+  'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
+  'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getFAQs' : IDL.Func([], [IDL.Vec(Faq)], ['query']),
+  'getMyDeposits' : IDL.Func([], [IDL.Vec(DepositOutput)], ['query']),
+  'getPolicy' : IDL.Func([], [IDL.Text], ['query']),
+  'getSiteStats' : IDL.Func([], [SiteStats], ['query']),
+  'getTerms' : IDL.Func([], [IDL.Text], ['query']),
+  'getUserProfile' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Opt(UserProfile)],
+      ['query'],
+    ),
+  'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'rejectDeposit' : IDL.Func([IDL.Nat], [], []),
+  'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'setFAQs' : IDL.Func([IDL.Vec(Faq)], [], []),
+  'setPolicy' : IDL.Func([IDL.Text], [], []),
+  'setTerms' : IDL.Func([IDL.Text], [], []),
+  'submitDeposit' : IDL.Func([DepositInput], [IDL.Nat], []),
 });
 
 export const idlInitArgs = [];
 
 export const idlFactory = ({ IDL }) => {
-  return IDL.Service({ 'greet' : IDL.Func([], [IDL.Text], ['query']) });
+  const _CaffeineStorageCreateCertificateResult = IDL.Record({
+    'method' : IDL.Text,
+    'blob_hash' : IDL.Text,
+  });
+  const _CaffeineStorageRefillInformation = IDL.Record({
+    'proposed_top_up_amount' : IDL.Opt(IDL.Nat),
+  });
+  const _CaffeineStorageRefillResult = IDL.Record({
+    'success' : IDL.Opt(IDL.Bool),
+    'topped_up_amount' : IDL.Opt(IDL.Nat),
+  });
+  const UserRole = IDL.Variant({
+    'admin' : IDL.Null,
+    'user' : IDL.Null,
+    'guest' : IDL.Null,
+  });
+  const DepositStatus = IDL.Variant({
+    'verified' : IDL.Null,
+    'pending' : IDL.Null,
+    'rejected' : IDL.Null,
+  });
+  const Time = IDL.Int;
+  const DepositOutput = IDL.Record({
+    'id' : IDL.Nat,
+    'status' : DepositStatus,
+    'asset' : IDL.Text,
+    'screenshotBlobId' : IDL.Opt(IDL.Text),
+    'txid' : IDL.Text,
+    'timestamp' : Time,
+    'amount' : IDL.Nat,
+  });
+  const UserProfile = IDL.Record({ 'name' : IDL.Text });
+  const Faq = IDL.Record({ 'question' : IDL.Text, 'answer' : IDL.Text });
+  const SiteStats = IDL.Record({
+    'pendingCount' : IDL.Nat,
+    'approvedCount' : IDL.Nat,
+    'totalUsers' : IDL.Nat,
+    'totalDeposits' : IDL.Nat,
+    'rejectedCount' : IDL.Nat,
+  });
+  const DepositInput = IDL.Record({
+    'asset' : IDL.Text,
+    'screenshotBlobId' : IDL.Opt(IDL.Text),
+    'txid' : IDL.Text,
+    'amount' : IDL.Nat,
+  });
+  
+  return IDL.Service({
+    '_caffeineStorageBlobIsLive' : IDL.Func(
+        [IDL.Vec(IDL.Nat8)],
+        [IDL.Bool],
+        ['query'],
+      ),
+    '_caffeineStorageBlobsToDelete' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Vec(IDL.Nat8))],
+        ['query'],
+      ),
+    '_caffeineStorageConfirmBlobDeletion' : IDL.Func(
+        [IDL.Vec(IDL.Vec(IDL.Nat8))],
+        [],
+        [],
+      ),
+    '_caffeineStorageCreateCertificate' : IDL.Func(
+        [IDL.Text],
+        [_CaffeineStorageCreateCertificateResult],
+        [],
+      ),
+    '_caffeineStorageRefillCashier' : IDL.Func(
+        [IDL.Opt(_CaffeineStorageRefillInformation)],
+        [_CaffeineStorageRefillResult],
+        [],
+      ),
+    '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
+    '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+    'approveDeposit' : IDL.Func([IDL.Nat], [], []),
+    'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'getAllDeposits' : IDL.Func([], [IDL.Vec(DepositOutput)], ['query']),
+    'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
+    'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getFAQs' : IDL.Func([], [IDL.Vec(Faq)], ['query']),
+    'getMyDeposits' : IDL.Func([], [IDL.Vec(DepositOutput)], ['query']),
+    'getPolicy' : IDL.Func([], [IDL.Text], ['query']),
+    'getSiteStats' : IDL.Func([], [SiteStats], ['query']),
+    'getTerms' : IDL.Func([], [IDL.Text], ['query']),
+    'getUserProfile' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Opt(UserProfile)],
+        ['query'],
+      ),
+    'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'rejectDeposit' : IDL.Func([IDL.Nat], [], []),
+    'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'setFAQs' : IDL.Func([IDL.Vec(Faq)], [], []),
+    'setPolicy' : IDL.Func([IDL.Text], [], []),
+    'setTerms' : IDL.Func([IDL.Text], [], []),
+    'submitDeposit' : IDL.Func([DepositInput], [IDL.Nat], []),
+  });
 };
 
 export const init = ({ IDL }) => { return []; };
