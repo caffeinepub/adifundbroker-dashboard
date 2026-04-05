@@ -11,13 +11,7 @@ interface TopNavProps {
   onLogout: () => void;
 }
 
-const BASE_NAV_LINKS = [
-  "DASHBOARD",
-  "TERMINAL",
-  "PORTFOLIO",
-  "ACTIVITY",
-  "WALLET",
-];
+const BASE_NAV_LINKS = ["DASHBOARD", "WALLET"];
 
 export default function TopNav({
   userPrincipal,

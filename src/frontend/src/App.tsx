@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import AdminPanel from "./components/AdminPanel";
 import Dashboard from "./components/Dashboard";
 import DepositModal from "./components/DepositModal";
+import InfoModal from "./components/InfoModal";
 import LoginPage from "./components/LoginPage";
 import TopNav from "./components/TopNav";
 import WalletTab from "./components/WalletTab";
@@ -16,6 +17,9 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("DASHBOARD");
+  const [infoPage, setInfoPage] = useState<
+    "about" | "terms" | "support" | "faq" | null
+  >(null);
 
   const { actor } = useActor();
 
@@ -105,15 +109,38 @@ export default function App() {
       {/* Footer */}
       <footer className="border-t border-[#FF8C00]/15 py-4 px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-[#6B7C8F]">
         <div className="flex items-center gap-4">
-          <span className="uppercase tracking-wide hover:text-[#93A4B7] cursor-pointer">
+          <button
+            type="button"
+            data-ocid="footer.about.button"
+            onClick={() => setInfoPage("about")}
+            className="uppercase tracking-wide hover:text-[#93A4B7] cursor-pointer transition-colors"
+          >
             About
-          </span>
-          <span className="uppercase tracking-wide hover:text-[#93A4B7] cursor-pointer">
+          </button>
+          <button
+            type="button"
+            data-ocid="footer.terms.button"
+            onClick={() => setInfoPage("terms")}
+            className="uppercase tracking-wide hover:text-[#93A4B7] cursor-pointer transition-colors"
+          >
             Terms
-          </span>
-          <span className="uppercase tracking-wide hover:text-[#93A4B7] cursor-pointer">
+          </button>
+          <button
+            type="button"
+            data-ocid="footer.faq.button"
+            onClick={() => setInfoPage("faq")}
+            className="uppercase tracking-wide hover:text-[#93A4B7] cursor-pointer transition-colors"
+          >
+            FAQ
+          </button>
+          <button
+            type="button"
+            data-ocid="footer.support.button"
+            onClick={() => setInfoPage("support")}
+            className="uppercase tracking-wide hover:text-[#93A4B7] cursor-pointer transition-colors"
+          >
             Support
-          </span>
+          </button>
         </div>
         <p className="text-center">
           \u00a9 {new Date().getFullYear()}{" "}
@@ -133,6 +160,12 @@ export default function App() {
           </span>
         </div>
       </footer>
+
+      <InfoModal
+        page={infoPage}
+        onClose={() => setInfoPage(null)}
+        actor={actor ?? undefined}
+      />
     </div>
   );
 }
