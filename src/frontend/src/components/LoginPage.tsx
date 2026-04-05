@@ -9,21 +9,26 @@ interface LoginPageProps {
 }
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
-  const { login, isLoggingIn, isLoginSuccess, identity } =
+  const { login, isLoggingIn, isInitializing, identity } =
     useInternetIdentity();
-  const { actor } = useActor();
+  const { actor, isFetching: isActorFetching } = useActor();
   const [isRegistering, setIsRegistering] = useState(false);
   const [hasAdminToken] = useState(() => {
     const token = getSecretParameter("caffeineAdminToken");
     return !!token;
   });
 
+  // Trigger dashboard entry whenever:
+  // 1. A fresh login completes (isLoginSuccess), OR
+  // 2. A stored identity is restored on mount (identity is set, not initializing)
+  // In both cases we need the actor to be ready too.
   useEffect(() => {
-    if (isLoginSuccess && identity && actor && !isRegistering) {
+    const identityReady = !!identity && !isInitializing;
+    const actorReady = !!actor && !isActorFetching;
+
+    if (identityReady && actorReady && !isRegistering) {
       setIsRegistering(true);
       const principal = identity.getPrincipal().toText();
-      // Clear admin token from session storage so the banner doesn't persist
-      // across future visits that don't include the token in the URL
       clearSessionParameter("caffeineAdminToken");
       actor
         .saveCallerUserProfile({ name: principal })
@@ -39,18 +44,24 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           setIsRegistering(false);
         });
     }
-  }, [isLoginSuccess, identity, actor, onLogin, isRegistering]);
+  }, [
+    identity,
+    actor,
+    isInitializing,
+    isActorFetching,
+    onLogin,
+    isRegistering,
+  ]);
 
-  const isLoading = isLoggingIn || isRegistering;
+  const isLoading =
+    isLoggingIn || isRegistering || isInitializing || isActorFetching;
 
   return (
     <div className="login-bg min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Animated background orbs */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="orb orb-1" />
         <div className="orb orb-2" />
         <div className="orb orb-3" />
-        {/* Perspective grid */}
         <div className="perspective-grid" />
       </div>
 
@@ -60,7 +71,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         transition={{ duration: 0.7, ease: "easeOut" }}
         className="relative z-10 w-full max-w-md mx-auto px-6"
       >
-        {/* Pulsing ring behind card */}
         <div
           className="absolute inset-0 flex items-center justify-center pointer-events-none"
           aria-hidden="true"
@@ -73,7 +83,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         </div>
 
         <div className="cyber-card p-10 flex flex-col items-center gap-6">
-          {/* Logo / Wordmark */}
           <div className="flex items-center gap-3 mb-2">
             <svg
               width="36"
@@ -130,7 +139,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
           <div className="w-full h-px bg-gradient-to-r from-transparent via-[#FF8C00]/40 to-transparent" />
 
-          {/* Admin token detected banner -- only shows when token is in the URL */}
           {hasAdminToken && (
             <motion.div
               initial={{ opacity: 0, y: -8 }}
@@ -146,7 +154,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             </motion.div>
           )}
 
-          {/* ICP Login Button */}
           <button
             type="button"
             data-ocid="login.primary_button"
@@ -158,12 +165,15 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               <>
                 <div className="w-5 h-5 border-2 border-black/40 border-t-black rounded-full animate-spin" />
                 <span>
-                  {isRegistering ? "REGISTERING\u2026" : "AUTHENTICATING\u2026"}
+                  {isRegistering
+                    ? "REGISTERING\u2026"
+                    : isInitializing || isActorFetching
+                      ? "LOADING\u2026"
+                      : "AUTHENTICATING\u2026"}
                 </span>
               </>
             ) : (
               <>
-                {/* ICP logo SVG */}
                 <svg
                   width="22"
                   height="22"
