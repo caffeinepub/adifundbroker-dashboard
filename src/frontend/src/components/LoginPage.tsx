@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useActor } from "../hooks/useActor";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
-import { getSecretParameter } from "../utils/urlParams";
+import { clearSessionParameter, getSecretParameter } from "../utils/urlParams";
 
 interface LoginPageProps {
   onLogin: (principal: string, isAdmin: boolean) => void;
@@ -22,6 +22,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     if (isLoginSuccess && identity && actor && !isRegistering) {
       setIsRegistering(true);
       const principal = identity.getPrincipal().toText();
+      // Clear admin token from session storage so the banner doesn't persist
+      // across future visits that don't include the token in the URL
+      clearSessionParameter("caffeineAdminToken");
       actor
         .saveCallerUserProfile({ name: principal })
         .then(() => actor.isCallerAdmin())
@@ -30,7 +33,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         })
         .catch((err) => {
           console.error("Registration failed:", err);
-          // Fallback: log in without admin
           onLogin(principal, false);
         })
         .finally(() => {
@@ -128,7 +130,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
           <div className="w-full h-px bg-gradient-to-r from-transparent via-[#FF8C00]/40 to-transparent" />
 
-          {/* Admin token detected banner */}
+          {/* Admin token detected banner -- only shows when token is in the URL */}
           {hasAdminToken && (
             <motion.div
               initial={{ opacity: 0, y: -8 }}
