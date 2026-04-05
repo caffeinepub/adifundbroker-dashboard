@@ -1,0 +1,312 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
+
+@font-face {
+  font-family: "BricolageGrotesque";
+  src: url("/assets/fonts/BricolageGrotesque.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "GeistMono";
+  src: url("/assets/fonts/GeistMono.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+    /* Cyber-Degen dark mode tokens (OKLCH L C H) */
+    /* Page bg: #0B0F14 */
+    --background: 0.095 0.015 240;
+    /* Card surface: #0F1720 */
+    --card: 0.113 0.02 240;
+    /* Foreground: #E6EDF3 */
+    --foreground: 0.92 0.01 240;
+    /* Card foreground */
+    --card-foreground: 0.92 0.01 240;
+    /* Popover */
+    --popover: 0.113 0.02 240;
+    --popover-foreground: 0.92 0.01 240;
+    /* Primary: neon orange #FF8C00 */
+    --primary: 0.72 0.18 55;
+    --primary-foreground: 0.08 0 0;
+    /* Secondary: dark slate */
+    --secondary: 0.16 0.018 240;
+    --secondary-foreground: 0.92 0.01 240;
+    /* Muted: #93A4B7 */
+    --muted: 0.16 0.018 240;
+    --muted-foreground: 0.64 0.025 240;
+    /* Accent */
+    --accent: 0.2 0.02 240;
+    --accent-foreground: 0.92 0.01 240;
+    /* Destructive */
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 0.985 0 0;
+    /* Border: orange tint */
+    --border: 0.72 0.18 55 / 30%;
+    --input: 0.72 0.18 55 / 20%;
+    --ring: 0.72 0.18 55;
+    /* Charts */
+    --chart-1: 0.72 0.18 55;
+    --chart-2: 0.59 0.19 145;
+    --chart-3: 0.55 0.2 255;
+    --chart-4: 0.7 0.16 280;
+    --chart-5: 0.8 0.18 80;
+    /* Sidebar */
+    --sidebar: 0.095 0.015 240;
+    --sidebar-foreground: 0.92 0.01 240;
+    --sidebar-primary: 0.72 0.18 55;
+    --sidebar-primary-foreground: 0.08 0 0;
+    --sidebar-accent: 0.16 0.018 240;
+    --sidebar-accent-foreground: 0.92 0.01 240;
+    --sidebar-border: 0.72 0.18 55 / 20%;
+    --sidebar-ring: 0.72 0.18 55;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Space Grotesk", "BricolageGrotesque", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ==============================
+   CYBER-DEGEN COMPONENT CLASSES
+   ============================== */
+@layer components {
+  /* Card style */
+  .cyber-card {
+    @apply bg-[#0F1720] rounded-2xl p-5;
+    border: 1px solid rgba(255, 140, 0, 0.35);
+    box-shadow: 0 0 0 1px rgba(255, 140, 0, 0.15), 0 0 24px
+      rgba(255, 140, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  /* Primary CTA button */
+  .cyber-btn-primary {
+    background: linear-gradient(135deg, #ff8c00 0%, #ff6a00 100%);
+    color: #000;
+    font-weight: 800;
+    box-shadow: 0 0 18px rgba(255, 140, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s ease;
+  }
+
+  .cyber-btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #ffaa40 0%, #ff8c00 100%);
+    box-shadow: 0 0 28px rgba(255, 140, 0, 0.65), 0 2px 12px rgba(0, 0, 0, 0.5);
+    transform: translateY(-1px);
+  }
+
+  /* Card heading style */
+  .card-heading {
+    @apply text-sm font-extrabold uppercase tracking-[0.14em];
+  }
+
+  /* Top navigation bar */
+  .top-nav {
+    background: rgba(11, 15, 20, 0.92);
+    border-bottom: 1px solid rgba(255, 140, 0, 0.25);
+    box-shadow: 0 1px 24px rgba(255, 140, 0, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Dashboard background */
+  .dashboard-bg {
+    background-color: #0b0f14;
+    background-image: radial-gradient(
+        ellipse at 20% 20%,
+        rgba(255, 140, 0, 0.05) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        ellipse at 80% 80%,
+        rgba(255, 140, 0, 0.04) 0%,
+        transparent 50%
+      ), linear-gradient(rgba(34, 48, 65, 0.25) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34, 48, 65, 0.25) 1px, transparent 1px);
+    background-size: auto, auto, 48px 48px, 48px 48px;
+    background-position: 0 0, 0 0, -1px -1px, -1px -1px;
+  }
+
+  /* Login page background */
+  .login-bg {
+    background-color: #0b0f14;
+    background-image: radial-gradient(
+        ellipse at 50% 40%,
+        rgba(255, 140, 0, 0.08) 0%,
+        transparent 60%
+      ), linear-gradient(rgba(34, 48, 65, 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34, 48, 65, 0.3) 1px, transparent 1px);
+    background-size: auto, 60px 60px, 60px 60px;
+    background-position: 0 0, -1px -1px, -1px -1px;
+  }
+
+  /* Perspective grid overlay */
+  .perspective-grid {
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 49px,
+        rgba(255, 140, 0, 0.06) 50px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 49px,
+        rgba(255, 140, 0, 0.06) 50px
+      );
+    mask-image: radial-gradient(ellipse at center, transparent 20%, black 80%);
+    pointer-events: none;
+  }
+
+  /* Animated orbs */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    animation: orb-float 8s ease-in-out infinite alternate;
+  }
+
+  .orb-1 {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(
+      circle,
+      rgba(255, 140, 0, 0.08) 0%,
+      transparent 70%
+    );
+    top: -100px;
+    left: -100px;
+    animation-duration: 10s;
+  }
+
+  .orb-2 {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(
+      circle,
+      rgba(59, 130, 246, 0.06) 0%,
+      transparent 70%
+    );
+    bottom: -50px;
+    right: -50px;
+    animation-duration: 12s;
+    animation-delay: -3s;
+  }
+
+  .orb-3 {
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(
+      circle,
+      rgba(34, 197, 94, 0.04) 0%,
+      transparent 70%
+    );
+    top: 50%;
+    right: 20%;
+    animation-duration: 9s;
+    animation-delay: -6s;
+  }
+
+  /* Pulse ring for login page */
+  .pulse-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* ==============================
+   CSS ANIMATIONS
+   ============================== */
+
+@keyframes radar-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-ring {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+}
+
+@keyframes bar-bounce {
+  0%,
+  100% {
+    height: 25%;
+    opacity: 0.7;
+  }
+  50% {
+    height: 90%;
+    opacity: 1;
+  }
+}
+
+@keyframes scan-fade {
+  0% {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes orb-float {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(30px, 20px);
+  }
+}
+
+.animate-radar-spin {
+  animation: radar-spin 4s linear infinite;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2.5s ease-in-out infinite;
+}
+
+.animate-bar-bounce {
+  animation: bar-bounce 1.5s ease-in-out infinite;
+}
+
+.animate-scan-fade {
+  animation: scan-fade 0.4s ease-out;
+}
