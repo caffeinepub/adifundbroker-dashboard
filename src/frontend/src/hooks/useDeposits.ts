@@ -17,30 +17,28 @@ function mapBackendDeposit(d: DepositOutput): Deposit {
     status,
     txid: d.txid,
     screenshotBlobId: d.screenshotBlobId ?? undefined,
+    userPrincipal: d.userPrincipal,
   };
 }
 
-export function useDeposits(actor: backendInterface | null, isAdmin: boolean) {
-  const [allDeposits, setAllDeposits] = useState<Deposit[]>([]);
+// useDeposits always fetches the caller's own deposits for the Wallet tab.
+// A separate call (getAllDeposits) is used by AdminPanel for the transaction queue.
+export function useDeposits(actor: backendInterface | null) {
+  const [myDeposits, setMyDeposits] = useState<Deposit[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchDeposits = useCallback(async () => {
     if (!actor) return;
     setLoading(true);
     try {
-      let raw: DepositOutput[];
-      if (isAdmin) {
-        raw = await actor.getAllDeposits();
-      } else {
-        raw = await actor.getMyDeposits();
-      }
-      setAllDeposits(raw.map(mapBackendDeposit));
+      const raw = await actor.getMyDeposits();
+      setMyDeposits(raw.map(mapBackendDeposit));
     } catch (err) {
       console.error("Failed to fetch deposits:", err);
     } finally {
       setLoading(false);
     }
-  }, [actor, isAdmin]);
+  }, [actor]);
 
   useEffect(() => {
     if (actor) {
@@ -50,7 +48,6 @@ export function useDeposits(actor: backendInterface | null, isAdmin: boolean) {
 
   const now = Date.now();
   const cycleStart = now - CYCLE_DAYS * 24 * 60 * 60 * 1000;
-  const myDeposits = allDeposits.filter((d) => !isAdmin || d.timestamp >= 0);
   const depositsInCycle = myDeposits.filter((d) => d.timestamp >= cycleStart);
   const remainingSlots = Math.max(0, DEPOSIT_LIMIT - depositsInCycle.length);
   const canDeposit = remainingSlots > 0;
@@ -73,11 +70,13 @@ export function useDeposits(actor: backendInterface | null, isAdmin: boolean) {
       screenshotBlobId?: string,
     ) => {
       if (!actor) return;
+      // screenshotBlobId is optional -- pass undefined when not provided,
+      // the backend adapter handles Candid optional encoding
       await actor.submitDeposit({
         asset,
         amount: BigInt(amount),
         txid: txid ?? "",
-        screenshotBlobId: screenshotBlobId ?? undefined,
+        screenshotBlobId: screenshotBlobId,
       });
       await fetchDeposits();
     },
@@ -85,7 +84,7 @@ export function useDeposits(actor: backendInterface | null, isAdmin: boolean) {
   );
 
   return {
-    allDeposits: isAdmin ? allDeposits : myDeposits,
+    deposits: myDeposits,
     depositsInCycle,
     remainingSlots,
     canDeposit,

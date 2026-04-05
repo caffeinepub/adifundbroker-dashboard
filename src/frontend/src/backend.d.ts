@@ -21,6 +21,7 @@ export interface Faq {
 export type Time = bigint;
 export interface DepositOutput {
     id: bigint;
+    userPrincipal: string;
     status: DepositStatus;
     asset: string;
     screenshotBlobId?: string;

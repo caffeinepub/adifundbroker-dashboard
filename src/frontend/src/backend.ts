@@ -103,6 +103,7 @@ export interface Faq {
 export type Time = bigint;
 export interface DepositOutput {
     id: bigint;
+    userPrincipal: string;
     status: DepositStatus;
     asset: string;
     screenshotBlobId?: string;
@@ -547,6 +548,7 @@ function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Ar
 }
 function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: bigint;
+    userPrincipal: string;
     status: _DepositStatus;
     asset: string;
     screenshotBlobId: [] | [string];
@@ -555,6 +557,7 @@ function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uin
     amount: bigint;
 }): {
     id: bigint;
+    userPrincipal: string;
     status: DepositStatus;
     asset: string;
     screenshotBlobId?: string;
@@ -564,6 +567,7 @@ function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uin
 } {
     return {
         id: value.id,
+        userPrincipal: value.userPrincipal,
         status: from_candid_DepositStatus_n13(_uploadFile, _downloadFile, value.status),
         asset: value.asset,
         screenshotBlobId: record_opt_to_undefined(from_candid_opt_n15(_uploadFile, _downloadFile, value.screenshotBlobId)),

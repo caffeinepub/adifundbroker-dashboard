@@ -40,8 +40,10 @@ actor {
     timestamp : Time.Time;
   };
 
+  // DepositOutput now includes userPrincipal so the admin queue can show real user IDs
   type DepositOutput = {
     id : Nat;
+    userPrincipal : Text;
     asset : Text;
     amount : Nat;
     txid : Text;
@@ -217,6 +219,7 @@ actor {
   func depositToOutput(deposit : Deposit) : DepositOutput {
     {
       id = deposit.id;
+      userPrincipal = deposit.user.toText();
       asset = deposit.asset;
       amount = deposit.amount;
       txid = deposit.txid;

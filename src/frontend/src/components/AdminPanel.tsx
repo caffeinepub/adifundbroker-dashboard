@@ -55,6 +55,12 @@ function DepositStatusBadge({ status }: { status: string }) {
   );
 }
 
+/** Shortens a principal to first-6...last-4 for display */
+function shortPrincipal(p: string): string {
+  if (!p || p.length <= 12) return p;
+  return `${p.slice(0, 8)}\u2026${p.slice(-6)}`;
+}
+
 function TransactionQueue({ actor }: { actor: backendInterface }) {
   const [deposits, setDeposits] = useState<DepositOutput[]>([]);
   const [loading, setLoading] = useState(true);
@@ -152,7 +158,7 @@ function TransactionQueue({ actor }: { actor: backendInterface }) {
           <tr className="border-b border-[#FF8C00]/10">
             {[
               "DATE",
-              "USER ID",
+              "USER",
               "ASSET",
               "AMOUNT",
               "TXID",
@@ -174,7 +180,6 @@ function TransactionQueue({ actor }: { actor: backendInterface }) {
             const statusStr = d.status as unknown as string;
             const isPending = statusStr === "pending";
             const ts = Number(d.timestamp) / 1_000_000;
-            const userId = d.id.toString();
 
             return (
               <tr
@@ -187,8 +192,11 @@ function TransactionQueue({ actor }: { actor: backendInterface }) {
                   </span>
                 </td>
                 <td className="py-3 px-3">
-                  <span className="text-[11px] font-mono text-[#93A4B7]">
-                    user-{userId}
+                  <span
+                    className="text-[11px] font-mono text-[#93A4B7]"
+                    title={d.userPrincipal}
+                  >
+                    {shortPrincipal(d.userPrincipal)}
                   </span>
                 </td>
                 <td className="py-3 px-3">
@@ -211,7 +219,7 @@ function TransactionQueue({ actor }: { actor: backendInterface }) {
                 </td>
                 <td className="py-3 px-3">
                   <span className="text-[11px] font-mono text-[#93A4B7]">
-                    {d.txid ? `${d.txid.slice(0, 12)}…` : "—"}
+                    {d.txid ? `${d.txid.slice(0, 12)}\u2026` : "\u2014"}
                   </span>
                 </td>
                 <td className="py-3 px-3">
@@ -244,7 +252,9 @@ function TransactionQueue({ actor }: { actor: backendInterface }) {
                         disabled={actionLoading !== null}
                         className="text-[10px] font-extrabold tracking-widest uppercase px-3 py-1.5 rounded-lg bg-green-500/15 text-green-400 border border-green-500/30 hover:bg-green-500/25 transition-colors disabled:opacity-50"
                       >
-                        {actionLoading === `approve-${d.id}` ? "…" : "APPROVE"}
+                        {actionLoading === `approve-${d.id}`
+                          ? "\u2026"
+                          : "APPROVE"}
                       </button>
                       <button
                         type="button"
@@ -252,11 +262,15 @@ function TransactionQueue({ actor }: { actor: backendInterface }) {
                         disabled={actionLoading !== null}
                         className="text-[10px] font-extrabold tracking-widest uppercase px-3 py-1.5 rounded-lg bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25 transition-colors disabled:opacity-50"
                       >
-                        {actionLoading === `reject-${d.id}` ? "…" : "REJECT"}
+                        {actionLoading === `reject-${d.id}`
+                          ? "\u2026"
+                          : "REJECT"}
                       </button>
                     </div>
                   ) : (
-                    <span className="text-[10px] text-[#6B7C8F] italic">—</span>
+                    <span className="text-[10px] text-[#6B7C8F] italic">
+                      \u2014
+                    </span>
                   )}
                 </td>
               </tr>
@@ -487,7 +501,7 @@ function FAQEditor({ actor }: { actor: backendInterface }) {
           disabled={saving}
           className="flex-1 cyber-btn-primary py-3 text-xs font-extrabold tracking-widest uppercase rounded-xl disabled:opacity-60"
         >
-          {saving ? "SAVING…" : "SAVE FAQS"}
+          {saving ? "SAVING\u2026" : "SAVE FAQS"}
         </button>
       </div>
     </div>
@@ -561,7 +575,7 @@ function ContentEditor({ actor }: { actor: backendInterface }) {
           disabled={savingTerms || loadingTerms}
           className="self-end cyber-btn-primary px-8 py-2.5 text-xs font-extrabold tracking-widest uppercase rounded-xl disabled:opacity-60"
         >
-          {savingTerms ? "SAVING…" : "SAVE TERMS"}
+          {savingTerms ? "SAVING\u2026" : "SAVE TERMS"}
         </button>
       </div>
 
@@ -585,7 +599,7 @@ function ContentEditor({ actor }: { actor: backendInterface }) {
           disabled={savingPolicy || loadingPolicy}
           className="self-end cyber-btn-primary px-8 py-2.5 text-xs font-extrabold tracking-widest uppercase rounded-xl disabled:opacity-60"
         >
-          {savingPolicy ? "SAVING…" : "SAVE POLICY"}
+          {savingPolicy ? "SAVING\u2026" : "SAVE POLICY"}
         </button>
       </div>
     </div>
@@ -601,10 +615,11 @@ export default function AdminPanel({ actor }: AdminPanelProps) {
       <div className="flex items-center gap-4 mb-6">
         <div>
           <h1 className="card-heading text-red-400 text-xl">
-            ⚙ ADMIN COMMAND CENTER
+            \u2699 ADMIN COMMAND CENTER
           </h1>
           <p className="text-[11px] text-[#6B7C8F] mt-1 tracking-wide">
-            Full system control — restricted to authenticated administrators
+            Full system control \u2014 restricted to authenticated
+            administrators
           </p>
         </div>
         <div className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-full border border-red-400/30 bg-red-400/5">

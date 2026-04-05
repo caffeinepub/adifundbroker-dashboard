@@ -19,15 +19,16 @@ export default function App() {
 
   const { actor } = useActor();
 
+  // useDeposits now always fetches only the logged-in user's own deposits
   const {
-    allDeposits,
+    deposits,
     depositsInCycle,
     canDeposit,
     remainingSlots,
     daysUntilReset,
     addDeposit,
     refreshDeposits,
-  } = useDeposits(actor, isAdmin);
+  } = useDeposits(actor);
 
   function handleLogin(principal: string, adminStatus: boolean) {
     setUserPrincipal(principal);
@@ -79,13 +80,13 @@ export default function App() {
       />
 
       <div className="dashboard-bg min-h-screen pt-16">
-        {activeTab === "WALLET" && <WalletTab deposits={allDeposits} />}
+        {activeTab === "WALLET" && <WalletTab deposits={deposits} />}
         {activeTab === "ADMIN" && isAdmin && actor && (
           <AdminPanel actor={actor} />
         )}
         {activeTab !== "WALLET" && activeTab !== "ADMIN" && (
           <Dashboard
-            deposits={allDeposits}
+            deposits={deposits}
             onDeposit={() => setDepositOpen(true)}
           />
         )}

@@ -18,6 +18,7 @@ export interface DepositInput {
 }
 export interface DepositOutput {
   'id' : bigint,
+  'userPrincipal' : string,
   'status' : DepositStatus,
   'asset' : string,
   'screenshotBlobId' : [] | [string],
