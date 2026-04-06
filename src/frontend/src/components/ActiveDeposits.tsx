@@ -91,7 +91,7 @@ export default function ActiveDeposits({
                 <th className="pb-2 text-left">ASSET</th>
                 <th className="pb-2 text-right">AMOUNT</th>
                 <th className="pb-2 text-right">ROI/DAY</th>
-                <th className="pb-2 text-right">DAILY £</th>
+                <th className="pb-2 text-right">DAILY $</th>
                 <th className="pb-2 text-right">TREND</th>
               </tr>
             </thead>
@@ -136,7 +136,7 @@ export default function ActiveDeposits({
                       </div>
                     </td>
                     <td className="py-2.5 text-right font-mono text-[#E6EDF3] text-xs">
-                      £{dep.amount.toLocaleString()}
+                      ${dep.amount.toLocaleString()}
                     </td>
                     <td className="py-2.5 text-right">
                       <span
@@ -151,7 +151,7 @@ export default function ActiveDeposits({
                       </span>
                     </td>
                     <td className="py-2.5 text-right font-mono text-[#22C55E] text-xs">
-                      £{daily.toFixed(2)}
+                      ${daily.toFixed(2)}
                     </td>
                     <td className="py-2.5 text-right">
                       <Sparkline values={sparkData} />

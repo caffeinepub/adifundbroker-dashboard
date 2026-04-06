@@ -40,19 +40,19 @@ export default function PortfolioOverview({
   const stats = [
     {
       label: "PORTFOLIO VALUE",
-      value: `£${totalPortfolioValue.toLocaleString("en-GB", { minimumFractionDigits: 2 })}`,
+      value: `$${totalPortfolioValue.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
       sub: "verified deposits only",
       color: "#FF8C00",
     },
     {
       label: "DAILY EARNINGS",
-      value: `£${dailyEarnings.toFixed(2)}`,
+      value: `$${dailyEarnings.toFixed(2)}`,
       sub: "projected/day",
       color: "#22C55E",
     },
     {
       label: "MONTHLY PROJ.",
-      value: `£${monthlyProjection.toFixed(2)}`,
+      value: `$${monthlyProjection.toFixed(2)}`,
       sub: "30-day estimate",
       color: "#3B82F6",
     },
@@ -112,7 +112,7 @@ export default function PortfolioOverview({
                   />
                 </div>
                 <div className="text-[10px] text-[#E6EDF3] w-16 text-right font-mono">
-                  £{amount.toLocaleString()}
+                  ${amount.toLocaleString()}
                 </div>
               </div>
             ))}

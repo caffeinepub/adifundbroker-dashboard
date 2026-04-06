@@ -78,9 +78,9 @@ export default function DepositModal({
     if (val === "") {
       setAmountError("");
     } else if (Number.isNaN(n) || n < 200) {
-      setAmountError("Minimum deposit is £200");
+      setAmountError("Minimum deposit is $200");
     } else if (n > 5000) {
-      setAmountError("Maximum deposit is £5,000");
+      setAmountError("Maximum deposit is $5,000");
     } else {
       setAmountError("");
     }
@@ -375,11 +375,11 @@ export default function DepositModal({
                           htmlFor="deposit-amount"
                           className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#93A4B7] block mb-2"
                         >
-                          AMOUNT (£200 – £5,000)
+                          AMOUNT ($200 – $5,000)
                         </label>
                         <div className="relative">
                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#93A4B7] text-sm font-bold">
-                            £
+                            $
                           </span>
                           <input
                             id="deposit-amount"
@@ -509,7 +509,7 @@ export default function DepositModal({
                       </span>{" "}
                       Send exactly{" "}
                       <span className="text-[#E6EDF3] font-bold">
-                        £{Number(amount).toLocaleString()}
+                        ${Number(amount).toLocaleString()}
                       </span>{" "}
                       worth of{" "}
                       <span className="text-[#FF8C00] font-bold">
@@ -750,7 +750,7 @@ export default function DepositModal({
                     <div className="flex items-center justify-between text-[10px] uppercase tracking-widest mt-2">
                       <span className="text-[#6B7C8F]">AMOUNT</span>
                       <span className="text-[#E6EDF3] font-bold">
-                        £{Number(amount).toLocaleString()}
+                        ${Number(amount).toLocaleString()}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-[10px] uppercase tracking-widest mt-2">

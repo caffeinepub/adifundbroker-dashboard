@@ -92,7 +92,7 @@ export default function WalletTab({ deposits }: WalletTabProps) {
         {[
           {
             label: "TOTAL DEPOSITED",
-            value: `£${deposits.reduce((s, d) => s + d.amount, 0).toLocaleString()}`,
+            value: `$${deposits.reduce((s, d) => s + d.amount, 0).toLocaleString()}`,
             color: "#FF8C00",
           },
           {
@@ -221,7 +221,7 @@ export default function WalletTab({ deposits }: WalletTabProps) {
                     {/* Amount */}
                     <TableCell className="py-4 px-5">
                       <span className="text-sm font-extrabold text-[#FF8C00]">
-                        £{deposit.amount.toLocaleString()}
+                        ${deposit.amount.toLocaleString()}
                       </span>
                     </TableCell>
 

@@ -237,7 +237,7 @@ function TransactionQueue({ actor }: { actor: backendInterface }) {
                 </td>
                 <td className="py-3 px-3">
                   <span className="text-sm font-extrabold text-[#FF8C00]">
-                    £{Number(d.amount).toLocaleString()}
+                    ${Number(d.amount).toLocaleString()}
                   </span>
                 </td>
                 <td className="py-3 px-3">

@@ -95,7 +95,7 @@ export default function ProjectedEarnings({
                       {row.asset} #{i + 1}
                     </td>
                     <td className="py-2 text-right font-mono text-[#E6EDF3]">
-                      £{row.amount.toLocaleString()}
+                      ${row.amount.toLocaleString()}
                     </td>
                     <td className="py-2 text-right">
                       <span className="text-[#22C55E] font-bold">
@@ -103,10 +103,10 @@ export default function ProjectedEarnings({
                       </span>
                     </td>
                     <td className="py-2 text-right font-mono text-[#22C55E]">
-                      £{row.daily.toFixed(2)}
+                      ${row.daily.toFixed(2)}
                     </td>
                     <td className="py-2 text-right font-mono text-[#FF8C00] font-bold">
-                      £{row.total.toFixed(2)}
+                      ${row.total.toFixed(2)}
                     </td>
                   </tr>
                 ))}
@@ -124,10 +124,10 @@ export default function ProjectedEarnings({
                   </td>
                   <td className="pt-2 text-right font-mono text-[#E6EDF3]" />
                   <td className="pt-2 text-right font-mono text-[#22C55E] font-bold">
-                    £{totalDaily.toFixed(2)}
+                    ${totalDaily.toFixed(2)}
                   </td>
                   <td className="pt-2 text-right font-mono text-[#FF8C00] font-extrabold text-sm">
-                    £{totalProjected.toFixed(2)}
+                    ${totalProjected.toFixed(2)}
                   </td>
                 </tr>
               </tfoot>
@@ -138,17 +138,17 @@ export default function ProjectedEarnings({
             {[
               {
                 label: "DAILY",
-                value: `£${totalDaily.toFixed(2)}`,
+                value: `$${totalDaily.toFixed(2)}`,
                 color: "#22C55E",
               },
               {
                 label: "WEEKLY",
-                value: `£${(totalDaily * 7).toFixed(2)}`,
+                value: `$${(totalDaily * 7).toFixed(2)}`,
                 color: "#3B82F6",
               },
               {
                 label: "MONTHLY",
-                value: `£${(totalDaily * 30).toFixed(2)}`,
+                value: `$${(totalDaily * 30).toFixed(2)}`,
                 color: "#FF8C00",
               },
             ].map((s) => (
