@@ -2,8 +2,8 @@ import type { Deposit } from "../types";
 import ActiveDeposits from "./ActiveDeposits";
 import AiTradingPulse from "./AiTradingPulse";
 import PortfolioOverview from "./PortfolioOverview";
-import ProjectedEarnings from "./ProjectedEarnings";
 import RecentActivity from "./RecentActivity";
+import StrategyPowerLevel from "./StrategyPowerLevel";
 
 interface DashboardProps {
   deposits: Deposit[];
@@ -27,10 +27,10 @@ export default function Dashboard({ deposits, onDeposit }: DashboardProps) {
         </div>
       </div>
 
-      {/* Row 2: Active Deposits | Projected Earnings */}
+      {/* Row 2: Active Deposits | Strategy Power Level */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ActiveDeposits deposits={deposits} onDeposit={onDeposit} />
-        <ProjectedEarnings deposits={deposits} />
+        <StrategyPowerLevel deposits={deposits} />
       </div>
     </main>
   );

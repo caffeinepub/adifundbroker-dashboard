@@ -39,29 +39,51 @@ function BodyText({ children }: { children: React.ReactNode }) {
 function AboutPage() {
   return (
     <div>
-      <SectionHeading>WEB3 ASSET MANAGEMENT PROTOCOL</SectionHeading>
+      <SectionHeading>PREMIER WEB3 STRATEGY &amp; RWA ROADMAP</SectionHeading>
       <BodyText>
-        Adifundbroker is an educational Web3 asset management simulation
-        platform. It demonstrates how digital asset portfolio management,
-        trading signals, and deposit workflows operate in a decentralised
-        environment. All data and transactions shown are simulated for
-        educational and demonstration purposes only. No real financial
-        transactions occur.
+        Adifundbroker is an advanced Web3 environment engineered for the next
+        generation of digital asset management. Our protocol leverages
+        high-frequency market analysis and Real World Asset (RWA)
+        diversification models to deliver a sophisticated "Proof-of-Strategy"
+        ecosystem. By participating in our multi-sector roadmap — spanning
+        decentralised liquidity, specialised market simulations, and
+        confidential RWA developments — users engage with institutional-grade
+        strategy mechanics in a competitive GameFi setting.
       </BodyText>
 
-      <SectionHeading>EDUCATIONAL DISCLAIMER</SectionHeading>
+      <SectionHeading>MULTI-SECTOR STRATEGY</SectionHeading>
       <BodyText>
-        This platform is provided strictly for educational and informational
-        purposes. It does not constitute financial advice. Past simulated
-        performance does not indicate future results. Participation is at the
-        user&apos;s own risk.
+        Our protocol is built around a diversified strategic framework. Each
+        participation tier unlocks a higher Strategy Power Level (SPL),
+        reflecting the compounding advantage of multi-sector engagement. From
+        base-layer market strategies to advanced RWA allocation models, the
+        platform is designed to reward depth of participation.
+      </BodyText>
+
+      <SectionHeading>RWA ROADMAP</SectionHeading>
+      <BodyText>
+        Adifundbroker&apos;s RWA Roadmap charts the integration of Real World
+        Asset mechanics into the Web3 strategy layer. While specific RWA
+        allocations remain proprietary to preserve strategic edge, our roadmap
+        operates with full transparency in reward distribution and participant
+        fund security within the simulation environment.
       </BodyText>
 
       <SectionHeading>PLATFORM INFRASTRUCTURE</SectionHeading>
       <BodyText>
-        Built on the Internet Computer Protocol (ICP), powered by on-chain
-        canisters for data persistence and identity. Authentication is handled
-        via ICP Internet Identity — no passwords, no custodial accounts.
+        Built on the Internet Computer Protocol (ICP). Authentication is handled
+        via Decentralised Sovereign Identity — powered by ICP Internet Identity.
+        No passwords, no custodial accounts. All strategy entries and
+        verifications are processed on-chain by our Strategy Managers via the
+        Admin Command Center.
+      </BodyText>
+
+      <SectionHeading>SIMULATION NOTICE</SectionHeading>
+      <BodyText>
+        Adifundbroker is a Web3 strategy simulation platform. All strategy
+        outputs, multipliers, and projected figures displayed are simulated
+        within the platform environment for demonstration and research purposes.
+        No real financial transactions or guaranteed returns are implied.
       </BodyText>
     </div>
   );
@@ -105,7 +127,7 @@ function TermsPage({ actor }: { actor?: backendInterface }) {
 const SUPPORT_TOPICS = [
   {
     title: "Deposit Verification Delays",
-    body: "Deposits are manually reviewed by the admin team. Verification typically takes 24–72 hours after submission.",
+    body: "Strategy entries are manually reviewed by the Strategy Manager team. Verification typically takes 24–72 hours after submission.",
   },
   {
     title: "Login Issues",
@@ -113,11 +135,11 @@ const SUPPORT_TOPICS = [
   },
   {
     title: "Rejected Transactions",
-    body: "If your deposit was rejected, check that the TXID and screenshot match the correct wallet address for the selected asset.",
+    body: "If your entry was rejected, check that the TXID and screenshot match the correct wallet address for the selected asset.",
   },
   {
     title: "Deposit Limits",
-    body: "Users are limited to 3 deposits per 30-day cycle. The reset timer is visible in the Wallet tab.",
+    body: "Users are limited to 3 strategy entries per 30-day cycle. The reset timer is visible in the Wallet tab.",
   },
 ];
 
@@ -126,9 +148,9 @@ function SupportPage() {
     <div>
       <SectionHeading>GETTING HELP</SectionHeading>
       <BodyText>
-        For assistance with your account, deposits, or platform features,
-        contact the Adifundbroker support team. Response times are typically
-        within 24–48 hours.
+        For assistance with your account, strategy entries, or platform
+        features, contact the Adifundbroker support team. Response times are
+        typically within 24–48 hours.
       </BodyText>
 
       <SectionHeading>COMMON TOPICS</SectionHeading>
