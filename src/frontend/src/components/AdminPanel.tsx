@@ -1,8 +1,10 @@
+import { Principal } from "@icp-sdk/core/principal";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import type {
   DepositOutput,
   Faq,
+  FullNotification,
   SiteStats,
   backendInterface,
 } from "../backend.d";
@@ -12,7 +14,13 @@ interface AdminPanelProps {
   actor: backendInterface;
 }
 
-type AdminTab = "QUEUE" | "USERS" | "STATS" | "FAQ" | "CONTENT";
+type AdminTab =
+  | "QUEUE"
+  | "USERS"
+  | "STATS"
+  | "FAQ"
+  | "CONTENT"
+  | "NOTIFICATIONS";
 
 const ADMIN_TABS: { id: AdminTab; label: string }[] = [
   { id: "QUEUE", label: "Transaction Queue" },
@@ -20,6 +28,7 @@ const ADMIN_TABS: { id: AdminTab; label: string }[] = [
   { id: "STATS", label: "Site Stats" },
   { id: "FAQ", label: "FAQ Editor" },
   { id: "CONTENT", label: "Content Editor" },
+  { id: "NOTIFICATIONS", label: "Notifications" },
 ];
 
 const ASSET_COLORS: Record<string, string> = {
@@ -59,6 +68,20 @@ function DepositStatusBadge({ status }: { status: string }) {
 function shortPrincipal(p: string): string {
   if (!p || p.length <= 12) return p;
   return `${p.slice(0, 8)}\u2026${p.slice(-6)}`;
+}
+
+function formatRelativeTime(timestampNs: bigint): string {
+  const ms = Number(timestampNs) / 1_000_000;
+  const diff = Date.now() - ms;
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return "just now";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `${day}d ago`;
+  return new Date(ms).toLocaleDateString("en-GB");
 }
 
 function TransactionQueue({ actor }: { actor: backendInterface }) {
@@ -606,6 +629,255 @@ function ContentEditor({ actor }: { actor: backendInterface }) {
   );
 }
 
+function NotificationsTab({ actor }: { actor: backendInterface }) {
+  const [message, setMessage] = useState("");
+  const [targetMode, setTargetMode] = useState<"all" | "specific">("all");
+  const [targetPrincipal, setTargetPrincipal] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sentHistory, setSentHistory] = useState<FullNotification[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+
+  const fetchHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      const list = await actor.getMyNotifications();
+      const sorted = [...list].sort((a, b) =>
+        Number(b.timestamp - a.timestamp),
+      );
+      setSentHistory(sorted);
+    } catch {
+      // silently ignore
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [actor]);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
+
+  async function handleSend() {
+    if (!message.trim()) {
+      toast.error("Please enter a message.");
+      return;
+    }
+
+    let targetPrincipalObj: Principal | null = null;
+    if (targetMode === "specific") {
+      if (!targetPrincipal.trim()) {
+        toast.error("Please enter a target principal ID.");
+        return;
+      }
+      try {
+        targetPrincipalObj = Principal.fromText(targetPrincipal.trim());
+      } catch {
+        toast.error("Invalid principal ID format.");
+        return;
+      }
+    }
+
+    setSending(true);
+    try {
+      await actor.sendNotification(message.trim(), targetPrincipalObj);
+      toast.success(
+        targetMode === "all"
+          ? "Broadcast sent to all users!"
+          : "Notification sent to user!",
+      );
+      setMessage("");
+      setTargetPrincipal("");
+      await fetchHistory();
+    } catch {
+      toast.error("Failed to send notification.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Compose Form */}
+      <div
+        className="cyber-card flex flex-col gap-5"
+        data-ocid="admin.notifications.card"
+      >
+        <div>
+          <h3 className="card-heading text-[#FF8C00] mb-1">
+            BROADCAST NOTIFICATIONS
+          </h3>
+          <p className="text-[11px] text-[#6B7C8F]">
+            Send a message to all users or a specific user by their ICP
+            principal ID.
+          </p>
+        </div>
+
+        {/* Message textarea */}
+        <div>
+          <label
+            htmlFor="notification-message"
+            className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#93A4B7] block mb-1.5"
+          >
+            MESSAGE
+          </label>
+          <textarea
+            id="notification-message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Write your notification message..."
+            rows={4}
+            data-ocid="admin.notifications.textarea"
+            className="w-full bg-[#0B0F14] border border-[#FF8C00]/30 rounded-xl px-4 py-3 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#FF8C00]/70 placeholder:text-[#6B7C8F]/60 resize-none"
+          />
+        </div>
+
+        {/* Target mode radio */}
+        <div>
+          <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#93A4B7] block mb-3">
+            SEND TO
+          </span>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              data-ocid="admin.notifications.all.toggle"
+              onClick={() => setTargetMode("all")}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase transition-all duration-200 border ${
+                targetMode === "all"
+                  ? "bg-[#FF8C00]/20 text-[#FF8C00] border-[#FF8C00]/50"
+                  : "bg-[#0B0F14] text-[#93A4B7] border-white/10 hover:text-[#E6EDF3] hover:border-[#FF8C00]/20"
+              }`}
+            >
+              <span
+                className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  targetMode === "all" ? "border-[#FF8C00]" : "border-[#6B7C8F]"
+                }`}
+              >
+                {targetMode === "all" && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF8C00]" />
+                )}
+              </span>
+              ALL USERS
+            </button>
+            <button
+              type="button"
+              data-ocid="admin.notifications.specific.toggle"
+              onClick={() => setTargetMode("specific")}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase transition-all duration-200 border ${
+                targetMode === "specific"
+                  ? "bg-[#FF8C00]/20 text-[#FF8C00] border-[#FF8C00]/50"
+                  : "bg-[#0B0F14] text-[#93A4B7] border-white/10 hover:text-[#E6EDF3] hover:border-[#FF8C00]/20"
+              }`}
+            >
+              <span
+                className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  targetMode === "specific"
+                    ? "border-[#FF8C00]"
+                    : "border-[#6B7C8F]"
+                }`}
+              >
+                {targetMode === "specific" && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF8C00]" />
+                )}
+              </span>
+              SPECIFIC USER
+            </button>
+          </div>
+        </div>
+
+        {/* Target principal input */}
+        {targetMode === "specific" && (
+          <div>
+            <label
+              htmlFor="target-principal"
+              className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#93A4B7] block mb-1.5"
+            >
+              TARGET PRINCIPAL ID
+            </label>
+            <input
+              id="target-principal"
+              type="text"
+              value={targetPrincipal}
+              onChange={(e) => setTargetPrincipal(e.target.value)}
+              placeholder="e.g. xxxxx-xxxxx-xxxxx-xxxxx-xxx"
+              data-ocid="admin.notifications.input"
+              className="w-full bg-[#0B0F14] border border-[#FF8C00]/30 rounded-xl px-4 py-2.5 text-sm text-[#E6EDF3] font-mono focus:outline-none focus:border-[#FF8C00]/70 placeholder:text-[#6B7C8F]/60"
+            />
+          </div>
+        )}
+
+        {/* Send button */}
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={sending || !message.trim()}
+          data-ocid="admin.notifications.submit_button"
+          className="self-start cyber-btn-primary px-8 py-3 text-xs font-extrabold tracking-widest uppercase rounded-xl disabled:opacity-60"
+        >
+          {sending
+            ? "SENDING\u2026"
+            : targetMode === "all"
+              ? "\u{1F4E2} BROADCAST TO ALL"
+              : "\u{1F514} SEND TO USER"}
+        </button>
+      </div>
+
+      {/* Sent History */}
+      <div className="cyber-card flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h3 className="card-heading text-[#FF8C00]">NOTIFICATION HISTORY</h3>
+          <button
+            type="button"
+            onClick={fetchHistory}
+            className="text-[9px] font-bold tracking-widest uppercase text-[#6B7C8F] hover:text-[#FF8C00] transition-colors"
+          >
+            REFRESH
+          </button>
+        </div>
+
+        {historyLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="w-6 h-6 border-2 border-[#FF8C00]/30 border-t-[#FF8C00] rounded-full animate-spin" />
+          </div>
+        ) : sentHistory.length === 0 ? (
+          <div
+            className="flex flex-col items-center justify-center py-8 gap-2"
+            data-ocid="admin.notifications.empty_state"
+          >
+            <p className="text-xs text-[#6B7C8F]">No notifications sent yet.</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-white/5">
+            {sentHistory.map((n, idx) => (
+              <li
+                key={n.id.toString()}
+                data-ocid={`admin.notifications.item.${idx + 1}`}
+                className="py-3 flex flex-col gap-1"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-xs text-[#E6EDF3] leading-relaxed flex-1">
+                    {n.message}
+                  </p>
+                  <span
+                    className={`flex-shrink-0 text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full border ${
+                      n.targetAll
+                        ? "text-[#FF8C00] border-[#FF8C00]/30 bg-[#FF8C00]/8"
+                        : "text-[#60A5FA] border-[#60A5FA]/30 bg-[#60A5FA]/8"
+                    }`}
+                  >
+                    {n.targetAll ? "ALL" : "SPECIFIC"}
+                  </span>
+                </div>
+                <p className="text-[10px] text-[#6B7C8F]">
+                  {formatRelativeTime(n.timestamp)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPanel({ actor }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>("QUEUE");
 
@@ -669,6 +941,8 @@ export default function AdminPanel({ actor }: AdminPanelProps) {
         {activeTab === "FAQ" && <FAQEditor actor={actor} />}
 
         {activeTab === "CONTENT" && <ContentEditor actor={actor} />}
+
+        {activeTab === "NOTIFICATIONS" && <NotificationsTab actor={actor} />}
       </div>
     </div>
   );

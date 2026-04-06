@@ -1,34 +1,36 @@
 # Adifundbroker Dashboard
 
 ## Current State
-- TopNav has 5 nav tabs: DASHBOARD, TERMINAL, PORTFOLIO, ACTIVITY, WALLET (plus ADMIN for admins)
-- TERMINAL, PORTFOLIO, ACTIVITY all render the same Dashboard component — they are functionally identical
-- Footer has About, Terms, Support as plain unclickable text spans with no content
-- FAQ exists in the backend (getFAQs) and is editable by admin but not visible to users anywhere
-- Terms and Policy exist in the backend (getTerms, getPolicy) and are editable by admin but not surfaced to users
-- No About or Support page content exists
+- ICP Internet Identity login with admin role assigned to first login (no hardcoded fallback yet)
+- TopNav has a Bell icon with a hardcoded badge of "3" but no click handler or notification panel wired up
+- No notification system exists in the backend or frontend
+- AdminPanel has 5 tabs: Queue, Users, Stats, FAQ, Content -- no notifications tab
+- Dashboard has no way for users to see or copy their own ICP principal ID
+- Admin role loss occurs when backend data resets because it relies on first-login assignment only
 
 ## Requested Changes (Diff)
 
 ### Add
-- InfoModal component: a full-screen overlay modal styled in Cyber-Degen dark mode that renders page content (About, Terms, Support, FAQ)
-- AboutPage section: static content about Adifundbroker — what it is, educational disclaimer, Web3 asset simulation platform description
-- SupportPage section: contact/support info with common help topics and a note directing users to the support email/channel
-- FAQPage section: loads FAQ entries from backend (actor.getFAQs()) with accordion-style display
-- TermsPage section: loads Terms text from backend (actor.getTerms()) — falls back to static placeholder if empty
-- Footer About, Terms, Support, FAQ links now open the InfoModal with the relevant page
-- FAQ link added to footer alongside About / Terms / Support
+- Backend: Notification type with id, message, sender, target (all users or specific principal), timestamp, and read status per user
+- Backend: `sendNotification(message, targetPrincipal?)` -- admin only, sends to all users if no target
+- Backend: `getMyNotifications()` -- returns notifications for the calling user
+- Backend: `markNotificationRead(id)` -- marks a notification as read for the calling user
+- Frontend: Working notification bell dropdown in TopNav -- shows list of notifications, unread count badge, mark-read on click
+- Frontend: "MY PRINCIPAL ID" display panel on the Dashboard with a one-click copy button so users can easily find and share their principal
+- AdminPanel: New "NOTIFICATIONS" tab (6th tab) with a compose form to write a message and send to all users or a specific principal
 
 ### Modify
-- TopNav: remove TERMINAL, PORTFOLIO, ACTIVITY tabs — keep only DASHBOARD, WALLET (and ADMIN for admins)
-- TopNav mobile drawer: same removal — only DASHBOARD, WALLET, ADMIN
-- App.tsx: pass actor to footer area so InfoModal can load FAQ/Terms from backend
-- Footer: convert span elements to buttons that open InfoModal; add FAQ button
+- TopNav Bell: Wire click handler to open/close notification dropdown; fetch real unread count from backend; replace hardcoded "3" badge
+- AdminPanel: Add NOTIFICATIONS tab to ADMIN_TABS array
+- Dashboard: Add principal ID copy panel below existing content
 
 ### Remove
-- TERMINAL, PORTFOLIO, ACTIVITY from BASE_NAV_LINKS in TopNav
+- Hardcoded badge count "3" on Bell icon
 
 ## Implementation Plan
-1. Create `src/frontend/src/components/InfoModal.tsx` — modal wrapper + About, Support, FAQ, Terms sub-pages
-2. Update `TopNav.tsx` — remove 3 redundant nav tabs
-3. Update `App.tsx` — add infoModal state (which page is open), pass actor to footer, wire footer buttons
+1. Add notification types and functions to backend main.mo: Notification type, notifications map, sendNotification, getMyNotifications, markNotificationRead
+2. Regenerate backend bindings (handled by generate_motoko_code)
+3. Add NotificationBell component to TopNav with dropdown panel (fetches from backend, shows messages, marks read)
+4. Add PrincipalCopyPanel component to Dashboard showing full principal with copy button
+5. Add NotificationsTab component to AdminPanel with compose + send form targeting all or specific user
+6. Wire all new components to actor

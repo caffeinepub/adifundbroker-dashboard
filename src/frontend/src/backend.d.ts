@@ -21,11 +21,11 @@ export interface Faq {
 export type Time = bigint;
 export interface DepositOutput {
     id: bigint;
-    userPrincipal: string;
     status: DepositStatus;
     asset: string;
     screenshotBlobId?: string;
     txid: string;
+    userPrincipal: string;
     timestamp: Time;
     amount: bigint;
 }
@@ -34,6 +34,14 @@ export interface DepositInput {
     screenshotBlobId?: string;
     txid: string;
     amount: bigint;
+}
+export interface FullNotification {
+    id: bigint;
+    isRead: boolean;
+    targetAll: boolean;
+    senderPrincipal: string;
+    message: string;
+    timestamp: Time;
 }
 export interface UserProfile {
     name: string;
@@ -56,13 +64,17 @@ export interface backendInterface {
     getCallerUserRole(): Promise<UserRole>;
     getFAQs(): Promise<Array<Faq>>;
     getMyDeposits(): Promise<Array<DepositOutput>>;
+    getMyNotifications(): Promise<Array<FullNotification>>;
     getPolicy(): Promise<string>;
     getSiteStats(): Promise<SiteStats>;
     getTerms(): Promise<string>;
+    getUnreadNotificationCount(): Promise<bigint>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
+    markNotificationRead(notificationId: bigint): Promise<void>;
     rejectDeposit(depositId: bigint): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    sendNotification(message: string, targetPrincipal: Principal | null): Promise<bigint>;
     setFAQs(newFaqs: Array<Faq>): Promise<void>;
     setPolicy(policyText: string): Promise<void>;
     setTerms(terms: string): Promise<void>;

@@ -18,11 +18,11 @@ export interface DepositInput {
 }
 export interface DepositOutput {
   'id' : bigint,
-  'userPrincipal' : string,
   'status' : DepositStatus,
   'asset' : string,
   'screenshotBlobId' : [] | [string],
   'txid' : string,
+  'userPrincipal' : string,
   'timestamp' : Time,
   'amount' : bigint,
 }
@@ -30,6 +30,14 @@ export type DepositStatus = { 'verified' : null } |
   { 'pending' : null } |
   { 'rejected' : null };
 export interface Faq { 'question' : string, 'answer' : string }
+export interface FullNotification {
+  'id' : bigint,
+  'isRead' : boolean,
+  'targetAll' : boolean,
+  'senderPrincipal' : string,
+  'message' : string,
+  'timestamp' : Time,
+}
 export interface SiteStats {
   'pendingCount' : bigint,
   'approvedCount' : bigint,
@@ -77,13 +85,17 @@ export interface _SERVICE {
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getFAQs' : ActorMethod<[], Array<Faq>>,
   'getMyDeposits' : ActorMethod<[], Array<DepositOutput>>,
+  'getMyNotifications' : ActorMethod<[], Array<FullNotification>>,
   'getPolicy' : ActorMethod<[], string>,
   'getSiteStats' : ActorMethod<[], SiteStats>,
   'getTerms' : ActorMethod<[], string>,
+  'getUnreadNotificationCount' : ActorMethod<[], bigint>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'markNotificationRead' : ActorMethod<[bigint], undefined>,
   'rejectDeposit' : ActorMethod<[bigint], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'sendNotification' : ActorMethod<[string, [] | [Principal]], bigint>,
   'setFAQs' : ActorMethod<[Array<Faq>], undefined>,
   'setPolicy' : ActorMethod<[string], undefined>,
   'setTerms' : ActorMethod<[string], undefined>,

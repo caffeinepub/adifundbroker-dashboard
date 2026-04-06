@@ -103,11 +103,11 @@ export interface Faq {
 export type Time = bigint;
 export interface DepositOutput {
     id: bigint;
-    userPrincipal: string;
     status: DepositStatus;
     asset: string;
     screenshotBlobId?: string;
     txid: string;
+    userPrincipal: string;
     timestamp: Time;
     amount: bigint;
 }
@@ -119,6 +119,14 @@ export interface DepositInput {
 }
 export interface _CaffeineStorageRefillInformation {
     proposed_top_up_amount?: bigint;
+}
+export interface FullNotification {
+    id: bigint;
+    isRead: boolean;
+    targetAll: boolean;
+    senderPrincipal: string;
+    message: string;
+    timestamp: Time;
 }
 export interface _CaffeineStorageCreateCertificateResult {
     method: string;
@@ -156,13 +164,17 @@ export interface backendInterface {
     getCallerUserRole(): Promise<UserRole>;
     getFAQs(): Promise<Array<Faq>>;
     getMyDeposits(): Promise<Array<DepositOutput>>;
+    getMyNotifications(): Promise<Array<FullNotification>>;
     getPolicy(): Promise<string>;
     getSiteStats(): Promise<SiteStats>;
     getTerms(): Promise<string>;
+    getUnreadNotificationCount(): Promise<bigint>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
+    markNotificationRead(notificationId: bigint): Promise<void>;
     rejectDeposit(depositId: bigint): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    sendNotification(message: string, targetPrincipal: Principal | null): Promise<bigint>;
     setFAQs(newFaqs: Array<Faq>): Promise<void>;
     setPolicy(policyText: string): Promise<void>;
     setTerms(terms: string): Promise<void>;
@@ -367,6 +379,20 @@ export class Backend implements backendInterface {
             return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getMyNotifications(): Promise<Array<FullNotification>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMyNotifications();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMyNotifications();
+            return result;
+        }
+    }
     async getPolicy(): Promise<string> {
         if (this.processError) {
             try {
@@ -409,6 +435,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getUnreadNotificationCount(): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getUnreadNotificationCount();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getUnreadNotificationCount();
+            return result;
+        }
+    }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
         if (this.processError) {
             try {
@@ -437,6 +477,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async markNotificationRead(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.markNotificationRead(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.markNotificationRead(arg0);
+            return result;
+        }
+    }
     async rejectDeposit(arg0: bigint): Promise<void> {
         if (this.processError) {
             try {
@@ -462,6 +516,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.saveCallerUserProfile(arg0);
+            return result;
+        }
+    }
+    async sendNotification(arg0: string, arg1: Principal | null): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.sendNotification(arg0, to_candid_opt_n19(this._uploadFile, this._downloadFile, arg1));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.sendNotification(arg0, to_candid_opt_n19(this._uploadFile, this._downloadFile, arg1));
             return result;
         }
     }
@@ -510,14 +578,14 @@ export class Backend implements backendInterface {
     async submitDeposit(arg0: DepositInput): Promise<bigint> {
         if (this.processError) {
             try {
-                const result = await this.actor.submitDeposit(to_candid_DepositInput_n19(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.submitDeposit(to_candid_DepositInput_n20(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.submitDeposit(to_candid_DepositInput_n19(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.submitDeposit(to_candid_DepositInput_n20(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
@@ -548,30 +616,30 @@ function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Ar
 }
 function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: bigint;
-    userPrincipal: string;
     status: _DepositStatus;
     asset: string;
     screenshotBlobId: [] | [string];
     txid: string;
+    userPrincipal: string;
     timestamp: _Time;
     amount: bigint;
 }): {
     id: bigint;
-    userPrincipal: string;
     status: DepositStatus;
     asset: string;
     screenshotBlobId?: string;
     txid: string;
+    userPrincipal: string;
     timestamp: Time;
     amount: bigint;
 } {
     return {
         id: value.id,
-        userPrincipal: value.userPrincipal,
         status: from_candid_DepositStatus_n13(_uploadFile, _downloadFile, value.status),
         asset: value.asset,
         screenshotBlobId: record_opt_to_undefined(from_candid_opt_n15(_uploadFile, _downloadFile, value.screenshotBlobId)),
         txid: value.txid,
+        userPrincipal: value.userPrincipal,
         timestamp: value.timestamp,
         amount: value.amount
     };
@@ -609,8 +677,8 @@ function from_candid_variant_n18(_uploadFile: (file: ExternalBlob) => Promise<Ui
 function from_candid_vec_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_DepositOutput>): Array<DepositOutput> {
     return value.map((x)=>from_candid_DepositOutput_n11(_uploadFile, _downloadFile, x));
 }
-function to_candid_DepositInput_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: DepositInput): _DepositInput {
-    return to_candid_record_n20(_uploadFile, _downloadFile, value);
+function to_candid_DepositInput_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: DepositInput): _DepositInput {
+    return to_candid_record_n21(_uploadFile, _downloadFile, value);
 }
 function to_candid_UserRole_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n9(_uploadFile, _downloadFile, value);
@@ -621,7 +689,10 @@ function to_candid__CaffeineStorageRefillInformation_n2(_uploadFile: (file: Exte
 function to_candid_opt_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation | null): [] | [__CaffeineStorageRefillInformation] {
     return value === null ? candid_none() : candid_some(to_candid__CaffeineStorageRefillInformation_n2(_uploadFile, _downloadFile, value));
 }
-function to_candid_record_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function to_candid_opt_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Principal | null): [] | [Principal] {
+    return value === null ? candid_none() : candid_some(value);
+}
+function to_candid_record_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     asset: string;
     screenshotBlobId?: string;
     txid: string;

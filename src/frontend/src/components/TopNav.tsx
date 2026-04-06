@@ -1,5 +1,6 @@
 import { Bell, LogOut, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { FullNotification, backendInterface } from "../backend.d";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 
 interface TopNavProps {
@@ -9,9 +10,221 @@ interface TopNavProps {
   onTabChange: (tab: string) => void;
   isAdmin?: boolean;
   onLogout: () => void;
+  actor?: backendInterface | null;
 }
 
 const BASE_NAV_LINKS = ["DASHBOARD", "WALLET"];
+
+function formatRelativeTime(timestampNs: bigint): string {
+  const ms = Number(timestampNs) / 1_000_000;
+  const diff = Date.now() - ms;
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return "just now";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `${day}d ago`;
+  return new Date(ms).toLocaleDateString("en-GB");
+}
+
+interface NotificationBellProps {
+  actor?: backendInterface | null;
+  variant?: "desktop" | "mobile";
+}
+
+function NotificationBell({
+  actor,
+  variant = "desktop",
+}: NotificationBellProps) {
+  const [open, setOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState<FullNotification[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [markingAll, setMarkingAll] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const fetchCount = useCallback(async () => {
+    if (!actor) return;
+    try {
+      const count = await actor.getUnreadNotificationCount();
+      setUnreadCount(Number(count));
+    } catch {
+      // silently ignore
+    }
+  }, [actor]);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!actor) return;
+    setLoading(true);
+    try {
+      const list = await actor.getMyNotifications();
+      // newest first
+      const sorted = [...list].sort((a, b) =>
+        Number(b.timestamp - a.timestamp),
+      );
+      setNotifications(sorted);
+    } catch {
+      // silently ignore
+    } finally {
+      setLoading(false);
+    }
+  }, [actor]);
+
+  useEffect(() => {
+    if (actor) fetchCount();
+  }, [actor, fetchCount]);
+
+  useEffect(() => {
+    if (open && actor) {
+      fetchNotifications();
+    }
+  }, [open, actor, fetchNotifications]);
+
+  // Close on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+    if (open) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  async function handleMarkRead(id: bigint) {
+    if (!actor) return;
+    try {
+      await actor.markNotificationRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch {
+      // silently ignore
+    }
+  }
+
+  async function handleMarkAllRead() {
+    if (!actor) return;
+    const unread = notifications.filter((n) => !n.isRead);
+    if (unread.length === 0) return;
+    setMarkingAll(true);
+    try {
+      await Promise.all(unread.map((n) => actor.markNotificationRead(n.id)));
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch {
+      // silently ignore
+    } finally {
+      setMarkingAll(false);
+    }
+  }
+
+  const buttonBase =
+    variant === "desktop"
+      ? "hidden md:block relative text-[#93A4B7] hover:text-[#FF8C00] transition-colors"
+      : "relative text-[#93A4B7] hover:text-[#FF8C00] transition-colors";
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <button
+        type="button"
+        aria-label="Notifications"
+        data-ocid="nav.notification.toggle"
+        onClick={() => setOpen((v) => !v)}
+        className={buttonBase}
+      >
+        <Bell size={18} />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] bg-[#FF8C00] rounded-full flex items-center justify-center px-0.5">
+            <span className="text-[7px] font-bold text-black leading-none">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          </span>
+        )}
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div
+          className="absolute right-0 top-8 w-80 rounded-xl border border-[#FF8C00]/30 bg-[#0F1720] shadow-2xl shadow-black/60 z-50 overflow-hidden"
+          data-ocid="nav.notification.popover"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#FF8C00]/15">
+            <span className="text-[10px] font-extrabold tracking-[0.18em] uppercase text-[#FF8C00]">
+              NOTIFICATIONS
+            </span>
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                onClick={handleMarkAllRead}
+                disabled={markingAll}
+                className="text-[9px] font-bold tracking-widest uppercase text-[#93A4B7] hover:text-[#FF8C00] transition-colors disabled:opacity-50"
+              >
+                {markingAll ? "MARKING…" : "MARK ALL READ"}
+              </button>
+            )}
+          </div>
+
+          {/* Body */}
+          <div className="max-h-80 overflow-y-auto">
+            {loading ? (
+              <div className="flex items-center justify-center py-10">
+                <div className="w-6 h-6 border-2 border-[#FF8C00]/30 border-t-[#FF8C00] rounded-full animate-spin" />
+              </div>
+            ) : notifications.length === 0 ? (
+              <div
+                className="flex flex-col items-center justify-center py-10 gap-2"
+                data-ocid="nav.notification.empty_state"
+              >
+                <Bell size={22} className="text-[#3A4A5C]" />
+                <p className="text-xs text-[#6B7C8F]">No notifications</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-white/5">
+                {notifications.map((n) => (
+                  <button
+                    key={n.id.toString()}
+                    type="button"
+                    onClick={() => !n.isRead && handleMarkRead(n.id)}
+                    disabled={n.isRead}
+                    className={`w-full flex gap-3 px-4 py-3 text-left transition-colors disabled:cursor-default ${
+                      n.isRead
+                        ? "hover:bg-white/3"
+                        : "bg-[#FF8C00]/4 hover:bg-[#FF8C00]/8 border-l-2 border-[#FF8C00]/70"
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className={`text-xs leading-relaxed break-words ${
+                          n.isRead ? "text-[#93A4B7]" : "text-[#E6EDF3]"
+                        }`}
+                      >
+                        {n.message}
+                      </p>
+                      <p className="text-[10px] text-[#6B7C8F] mt-1">
+                        {formatRelativeTime(n.timestamp)}
+                      </p>
+                    </div>
+                    {!n.isRead && (
+                      <span className="flex-shrink-0 mt-1 w-2 h-2 rounded-full bg-[#FF8C00] shadow-[0_0_5px_#FF8C00]" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function TopNav({
   userPrincipal,
@@ -20,6 +233,7 @@ export default function TopNav({
   onTabChange,
   isAdmin = false,
   onLogout,
+  actor,
 }: TopNavProps) {
   const { clear } = useInternetIdentity();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -142,16 +356,7 @@ export default function TopNav({
           </div>
 
           {/* Notification bell — desktop */}
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="hidden md:block relative text-[#93A4B7] hover:text-[#FF8C00] transition-colors"
-          >
-            <Bell size={18} />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#FF8C00] rounded-full flex items-center justify-center">
-              <span className="text-[7px] font-bold text-black">3</span>
-            </span>
-          </button>
+          <NotificationBell actor={actor} variant="desktop" />
 
           {/* Logout button — desktop */}
           <button
@@ -239,6 +444,14 @@ export default function TopNav({
               {link === "ADMIN" ? "\u2699 ADMIN" : link}
             </button>
           ))}
+
+          {/* Notification bell in mobile drawer */}
+          <div className="mt-2 px-4 py-3 rounded-xl border border-white/5 flex items-center justify-between">
+            <span className="text-xs font-bold tracking-[0.12em] uppercase text-[#93A4B7]">
+              NOTIFICATIONS
+            </span>
+            <NotificationBell actor={actor} variant="mobile" />
+          </div>
 
           {/* Deposit button in drawer */}
           <button

@@ -36,11 +36,20 @@ export const DepositOutput = IDL.Record({
   'asset' : IDL.Text,
   'screenshotBlobId' : IDL.Opt(IDL.Text),
   'txid' : IDL.Text,
+  'userPrincipal' : IDL.Text,
   'timestamp' : Time,
   'amount' : IDL.Nat,
 });
 export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const Faq = IDL.Record({ 'question' : IDL.Text, 'answer' : IDL.Text });
+export const FullNotification = IDL.Record({
+  'id' : IDL.Nat,
+  'isRead' : IDL.Bool,
+  'targetAll' : IDL.Bool,
+  'senderPrincipal' : IDL.Text,
+  'message' : IDL.Text,
+  'timestamp' : Time,
+});
 export const SiteStats = IDL.Record({
   'pendingCount' : IDL.Nat,
   'approvedCount' : IDL.Nat,
@@ -90,17 +99,25 @@ export const idlService = IDL.Service({
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getFAQs' : IDL.Func([], [IDL.Vec(Faq)], ['query']),
   'getMyDeposits' : IDL.Func([], [IDL.Vec(DepositOutput)], ['query']),
+  'getMyNotifications' : IDL.Func([], [IDL.Vec(FullNotification)], ['query']),
   'getPolicy' : IDL.Func([], [IDL.Text], ['query']),
   'getSiteStats' : IDL.Func([], [SiteStats], ['query']),
   'getTerms' : IDL.Func([], [IDL.Text], ['query']),
+  'getUnreadNotificationCount' : IDL.Func([], [IDL.Nat], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'markNotificationRead' : IDL.Func([IDL.Nat], [], []),
   'rejectDeposit' : IDL.Func([IDL.Nat], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'sendNotification' : IDL.Func(
+      [IDL.Text, IDL.Opt(IDL.Principal)],
+      [IDL.Nat],
+      [],
+    ),
   'setFAQs' : IDL.Func([IDL.Vec(Faq)], [], []),
   'setPolicy' : IDL.Func([IDL.Text], [], []),
   'setTerms' : IDL.Func([IDL.Text], [], []),
@@ -138,11 +155,20 @@ export const idlFactory = ({ IDL }) => {
     'asset' : IDL.Text,
     'screenshotBlobId' : IDL.Opt(IDL.Text),
     'txid' : IDL.Text,
+    'userPrincipal' : IDL.Text,
     'timestamp' : Time,
     'amount' : IDL.Nat,
   });
   const UserProfile = IDL.Record({ 'name' : IDL.Text });
   const Faq = IDL.Record({ 'question' : IDL.Text, 'answer' : IDL.Text });
+  const FullNotification = IDL.Record({
+    'id' : IDL.Nat,
+    'isRead' : IDL.Bool,
+    'targetAll' : IDL.Bool,
+    'senderPrincipal' : IDL.Text,
+    'message' : IDL.Text,
+    'timestamp' : Time,
+  });
   const SiteStats = IDL.Record({
     'pendingCount' : IDL.Nat,
     'approvedCount' : IDL.Nat,
@@ -192,17 +218,25 @@ export const idlFactory = ({ IDL }) => {
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getFAQs' : IDL.Func([], [IDL.Vec(Faq)], ['query']),
     'getMyDeposits' : IDL.Func([], [IDL.Vec(DepositOutput)], ['query']),
+    'getMyNotifications' : IDL.Func([], [IDL.Vec(FullNotification)], ['query']),
     'getPolicy' : IDL.Func([], [IDL.Text], ['query']),
     'getSiteStats' : IDL.Func([], [SiteStats], ['query']),
     'getTerms' : IDL.Func([], [IDL.Text], ['query']),
+    'getUnreadNotificationCount' : IDL.Func([], [IDL.Nat], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'markNotificationRead' : IDL.Func([IDL.Nat], [], []),
     'rejectDeposit' : IDL.Func([IDL.Nat], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'sendNotification' : IDL.Func(
+        [IDL.Text, IDL.Opt(IDL.Principal)],
+        [IDL.Nat],
+        [],
+      ),
     'setFAQs' : IDL.Func([IDL.Vec(Faq)], [], []),
     'setPolicy' : IDL.Func([IDL.Text], [], []),
     'setTerms' : IDL.Func([IDL.Text], [], []),

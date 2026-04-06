@@ -81,6 +81,7 @@ export default function App() {
         onTabChange={setActiveTab}
         isAdmin={isAdmin}
         onLogout={handleLogout}
+        actor={actor}
       />
 
       <div className="dashboard-bg min-h-screen pt-16">
@@ -92,6 +93,7 @@ export default function App() {
           <Dashboard
             deposits={deposits}
             onDeposit={() => setDepositOpen(true)}
+            userPrincipal={userPrincipal}
           />
         )}
       </div>

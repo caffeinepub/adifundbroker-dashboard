@@ -11,8 +11,9 @@ import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import Iter "mo:core/Iter";
 import MixinStorage "blob-storage/Mixin";
+import Migration "migration";
 
-
+(with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -83,6 +84,34 @@ actor {
     terms = "";
     userPolicy = "";
   };
+
+  public type Notification = {
+    id : Nat;
+    message : Text;
+    senderPrincipal : Text;
+    targetAll : Bool;
+    targetPrincipal : ?Text;
+    timestamp : Time.Time;
+  };
+
+  public type NotificationRead = {
+    notificationId : Nat;
+    readerPrincipal : Text;
+  };
+
+  public type FullNotification = {
+    id : Nat;
+    message : Text;
+    senderPrincipal : Text;
+    targetAll : Bool;
+    timestamp : Time.Time;
+    isRead : Bool;
+  };
+
+  var nextNotificationId = 0;
+  let notifications = Map.empty<Nat, Notification>();
+  let notificationReadRecords = Map.empty<Text, NotificationRead>();
+
   let userProfiles = Map.empty<Principal, UserProfile>();
 
   // User Profile Management
@@ -228,4 +257,67 @@ actor {
       timestamp = deposit.timestamp;
     };
   };
+
+  // Notification System
+  public shared ({ caller }) func sendNotification(message : Text, targetPrincipal : ?Principal) : async Nat {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Admin access required");
+    };
+    let notification : Notification = {
+      id = nextNotificationId;
+      message;
+      senderPrincipal = caller.toText();
+      targetAll = targetPrincipal == null;
+      targetPrincipal = switch (targetPrincipal) {
+        case (null) { null };
+        case (?p) { ?p.toText() };
+      };
+      timestamp = Time.now();
+    };
+    notifications.add(nextNotificationId, notification);
+    nextNotificationId += 1;
+    notification.id;
+  };
+
+  public query ({ caller }) func getMyNotifications() : async [FullNotification] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view notifications");
+    };
+    notifications.values().toArray().filter(func(n) { n.targetAll or n.targetPrincipal == ?caller.toText() }).map(func(n) { notificationToFull(n, caller) });
+  };
+
+  public shared ({ caller }) func markNotificationRead(notificationId : Nat) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can mark notifications as read");
+    };
+    let readKey = caller.toText() # "-" # notificationId.toText();
+    let readRecord : NotificationRead = {
+      notificationId;
+      readerPrincipal = caller.toText();
+    };
+    notificationReadRecords.add(readKey, readRecord);
+  };
+
+  public query ({ caller }) func getUnreadNotificationCount() : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view notification count");
+    };
+    let relevantNotifications = notifications.values().toArray().filter(func(n) { n.targetAll or n.targetPrincipal == ?caller.toText() });
+    var unreadCount = 0;
+    for (notification in relevantNotifications.values()) {
+      let readKey = caller.toText() # "-" # notification.id.toText();
+      if (not notificationReadRecords.containsKey(readKey)) {
+        unreadCount += 1;
+      };
+    };
+    unreadCount;
+  };
+
+  func notificationToFull(notification : Notification, caller : Principal) : FullNotification {
+    let readKey = caller.toText() # "-" # notification.id.toText();
+    {
+      notification with isRead = notificationReadRecords.containsKey(readKey);
+    };
+  };
 };
+
