@@ -249,13 +249,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
   useEffect(() => {
     // Trigger dashboard redirect when:
-    // 1. identity is available (authenticated)
-    // 2. isLoginSuccess is true (covers both fresh login AND restored sessions on page load)
-    // 3. actor is ready
+    // 1. isLoginSuccess is true (hook now sets this for BOTH fresh logins AND returning sessions)
+    // 2. identity is available
+    // 3. actor is ready and not fetching
     // 4. not already handling this login
     if (
-      !identity ||
       !isLoginSuccess ||
+      !identity ||
       !actor ||
       isActorFetching ||
       loginHandledRef.current
@@ -316,7 +316,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           >
             <div className="pulse-ring w-96 h-96 rounded-full border border-[#FF8C00]/20 animate-pulse-ring" />
             <div
-              className="pulse-ring w-80 h-80 rounded-full border border-[#FF8C00]/30 animate-pulse-ring absolute"
+              className="pulse-ring w-80 h-80 rounded-full border border-[#FF8C00]/20 animate-pulse-ring absolute"
               style={{ animationDelay: "0.5s" }}
             />
           </div>
