@@ -23,7 +23,6 @@ export default function App() {
 
   const { actor } = useActor();
 
-  // useDeposits now always fetches only the logged-in user's own deposits
   const {
     deposits,
     depositsInCycle,
@@ -145,15 +144,7 @@ export default function App() {
           </button>
         </div>
         <p className="text-center">
-          \u00a9 {new Date().getFullYear()}{" "}
-          <a
-            href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-[#FF8C00] transition-colors"
-          >
-            Built with \u2764 using caffeine.ai
-          </a>
+          \u00a9 2026 Built with \u2764 using caffeine.ai
         </p>
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-[#22C55E] shadow-[0_0_5px_#22C55E]" />

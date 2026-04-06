@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useActor } from "../hooks/useActor";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { clearSessionParameter, getSecretParameter } from "../utils/urlParams";
@@ -13,20 +13,19 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     useInternetIdentity();
   const { actor, isFetching: isActorFetching } = useActor();
   const [isRegistering, setIsRegistering] = useState(false);
+  const registrationInProgress = useRef(false);
   const [hasAdminToken] = useState(() => {
     const token = getSecretParameter("caffeineAdminToken");
     return !!token;
   });
 
-  // Trigger dashboard entry whenever:
-  // 1. A fresh login completes (isLoginSuccess), OR
-  // 2. A stored identity is restored on mount (identity is set, not initializing)
-  // In both cases we need the actor to be ready too.
   useEffect(() => {
     const identityReady = !!identity && !isInitializing;
     const actorReady = !!actor && !isActorFetching;
 
-    if (identityReady && actorReady && !isRegistering) {
+    // Guard: only run once per valid identity+actor pair
+    if (identityReady && actorReady && !registrationInProgress.current) {
+      registrationInProgress.current = true;
       setIsRegistering(true);
       const principal = identity.getPrincipal().toText();
       clearSessionParameter("caffeineAdminToken");
@@ -41,20 +40,18 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           onLogin(principal, false);
         })
         .finally(() => {
+          registrationInProgress.current = false;
           setIsRegistering(false);
         });
     }
-  }, [
-    identity,
-    actor,
-    isInitializing,
-    isActorFetching,
-    onLogin,
-    isRegistering,
-  ]);
+  }, [identity, actor, isInitializing, isActorFetching, onLogin]);
 
-  const isLoading =
-    isLoggingIn || isRegistering || isInitializing || isActorFetching;
+  // Only show loading spinner during actual user-initiated login or registering
+  // Do NOT show spinner for isInitializing -- that causes the "Registering" flash on logout
+  const isLoading = isLoggingIn || isRegistering;
+
+  // Show a subtle loading indicator only during initial app startup
+  const isStartingUp = isInitializing || isActorFetching;
 
   return (
     <div className="login-bg min-h-screen flex items-center justify-center relative overflow-hidden">
@@ -158,19 +155,20 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             type="button"
             data-ocid="login.primary_button"
             onClick={login}
-            disabled={isLoading}
+            disabled={isLoading || isStartingUp}
             className="w-full cyber-btn-primary flex items-center justify-center gap-3 py-4 px-6 rounded-xl text-sm font-bold tracking-[0.14em] uppercase transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>
                 <div className="w-5 h-5 border-2 border-black/40 border-t-black rounded-full animate-spin" />
                 <span>
-                  {isRegistering
-                    ? "REGISTERING\u2026"
-                    : isInitializing || isActorFetching
-                      ? "LOADING\u2026"
-                      : "AUTHENTICATING\u2026"}
+                  {isRegistering ? "CONNECTING\u2026" : "AUTHENTICATING\u2026"}
                 </span>
+              </>
+            ) : isStartingUp ? (
+              <>
+                <div className="w-5 h-5 border-2 border-black/40 border-t-black rounded-full animate-spin" />
+                <span>LOADING\u2026</span>
               </>
             ) : (
               <>
