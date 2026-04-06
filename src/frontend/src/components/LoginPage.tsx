@@ -17,7 +17,6 @@ function useCounter(target: number, duration = 1800, delay = 0) {
       const tick = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        // easeOutExpo
         const eased = progress === 1 ? 1 : 1 - 2 ** (-10 * progress);
         setCount(Math.round(eased * target));
         if (progress < 1) requestAnimationFrame(tick);
@@ -192,7 +191,6 @@ const TICKER_ITEMS: TickerEntry[] = [
   { id: "xrp", pair: "XRP/USD", change: "+1.3%", up: true },
 ];
 
-// Duplicate items with unique IDs for infinite ticker loop
 const TICKER_LOOP: TickerEntry[] = [
   ...TICKER_ITEMS.map((t) => ({ ...t, id: `a-${t.id}` })),
   ...TICKER_ITEMS.map((t) => ({ ...t, id: `b-${t.id}` })),
@@ -238,56 +236,64 @@ function MarketTicker() {
 }
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
-  const { login, isLoggingIn, isInitializing, identity } =
+  const { login, isLoggingIn, isInitializing, isLoginSuccess, identity } =
     useInternetIdentity();
   const { actor, isFetching: isActorFetching } = useActor();
   const [isRegistering, setIsRegistering] = useState(false);
-  const registrationInProgress = useRef(false);
+  // Guard ref: ensures we only attempt the onLogin flow once per successful auth
+  const loginHandledRef = useRef(false);
   const [hasAdminToken] = useState(() => {
     const token = getSecretParameter("caffeineAdminToken");
     return !!token;
   });
 
   useEffect(() => {
-    const identityReady = !!identity && !isInitializing;
-    const actorReady = !!actor && !isActorFetching;
-
-    // Guard: only run once per valid identity+actor pair
-    if (identityReady && actorReady && !registrationInProgress.current) {
-      registrationInProgress.current = true;
-      setIsRegistering(true);
-      const principal = identity.getPrincipal().toText();
-      clearSessionParameter("caffeineAdminToken");
-      actor
-        .saveCallerUserProfile({ name: principal })
-        .then(() => actor.isCallerAdmin())
-        .then((adminStatus) => {
-          onLogin(principal, adminStatus);
-        })
-        .catch((err) => {
-          console.error("Registration failed:", err);
-          onLogin(principal, false);
-        })
-        .finally(() => {
-          registrationInProgress.current = false;
-          setIsRegistering(false);
-        });
+    // Trigger dashboard redirect when:
+    // 1. identity is available (authenticated)
+    // 2. isLoginSuccess is true (covers both fresh login AND restored sessions on page load)
+    // 3. actor is ready
+    // 4. not already handling this login
+    if (
+      !identity ||
+      !isLoginSuccess ||
+      !actor ||
+      isActorFetching ||
+      loginHandledRef.current
+    ) {
+      return;
     }
-  }, [identity, actor, isInitializing, isActorFetching, onLogin]);
 
-  // Only show loading spinner during actual user-initiated login or registering
-  // Do NOT show spinner for isInitializing -- that causes the "Registering" flash on logout
+    loginHandledRef.current = true;
+    setIsRegistering(true);
+
+    const principal = identity.getPrincipal().toText();
+    clearSessionParameter("caffeineAdminToken");
+
+    actor
+      .saveCallerUserProfile({ name: principal })
+      .then(() => actor.isCallerAdmin())
+      .then((adminStatus) => {
+        onLogin(principal, adminStatus);
+      })
+      .catch((err) => {
+        console.error("Registration/login failed:", err);
+        onLogin(principal, false);
+      })
+      .finally(() => {
+        setIsRegistering(false);
+      });
+  }, [identity, isLoginSuccess, actor, isActorFetching, onLogin]);
+
+  // Show spinner only during actual user-triggered login or the backend registration call
   const isLoading = isLoggingIn || isRegistering;
 
-  // Show a subtle loading indicator only during initial app startup
+  // Show loading state during initial app startup (before we know if user has a session)
   const isStartingUp = isInitializing || isActorFetching;
 
   return (
     <div className="login-bg min-h-screen flex flex-col relative overflow-hidden">
-      {/* System status top banner */}
       <SystemStatusBanner />
 
-      {/* Background layers */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="orb orb-1" />
         <div className="orb orb-2" />
@@ -295,12 +301,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         <div className="perspective-grid" />
       </div>
 
-      {/* Main content */}
       <div className="flex flex-col items-center justify-center flex-1 pt-16 pb-12 px-4">
-        {/* Stats bar above login card */}
         <StatsBar />
 
-        {/* Login card */}
         <motion.div
           initial={{ opacity: 0, y: 32, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -400,16 +403,12 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               {isLoading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-black/40 border-t-black rounded-full animate-spin" />
-                  <span>
-                    {isRegistering
-                      ? "CONNECTING\u2026"
-                      : "AUTHENTICATING\u2026"}
-                  </span>
+                  <span>CONNECTING&hellip;</span>
                 </>
               ) : isStartingUp ? (
                 <>
                   <div className="w-5 h-5 border-2 border-black/40 border-t-black rounded-full animate-spin" />
-                  <span>LOADING\u2026</span>
+                  <span>LOADING&hellip;</span>
                 </>
               ) : (
                 <>
@@ -469,11 +468,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </div>
         </motion.div>
 
-        {/* Feature highlights strip below login card */}
         <FeatureStrip />
       </div>
 
-      {/* Market ticker at the very bottom */}
       <MarketTicker />
     </div>
   );

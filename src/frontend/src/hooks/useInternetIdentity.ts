@@ -62,8 +62,7 @@ async function createAuthClient(
     },
     ...createOptions,
   };
-  const authClient = await AuthClient.create(options);
-  return authClient;
+  return AuthClient.create(options);
 }
 
 function assertProviderPresent(
@@ -89,12 +88,11 @@ export function InternetIdentityProvider({
   children: ReactNode;
   createOptions?: AuthClientCreateOptions;
 }>) {
-  // KEY FIX: authClient stored in a ref, NOT state.
-  // Ref mutations do not trigger re-renders or re-run effects -- this permanently
-  // breaks the initialization loop that was causing the login button to be disabled.
+  // Use a ref for authClient so changes never trigger re-renders or effect re-runs
   const authClientRef = useRef<AuthClient | undefined>(undefined);
+  // Track whether we've initialized to prevent double-run in React StrictMode
   const initializingRef = useRef(false);
-  // Store createOptions in a ref so the effect can read it without being a dependency.
+  // Capture createOptions in a ref so the effect can use it without being a dependency
   const createOptionsRef = useRef(createOptions);
 
   const [identity, setIdentity] = useState<Identity | undefined>(undefined);
@@ -107,11 +105,12 @@ export function InternetIdentityProvider({
   }, []);
 
   const handleLoginSuccess = useCallback(() => {
-    const latestIdentity = authClientRef.current?.getIdentity();
-    if (!latestIdentity) {
+    const client = authClientRef.current;
+    if (!client) {
       setErrorMessage("Identity not found after successful login");
       return;
     }
+    const latestIdentity = client.getIdentity();
     setIdentity(latestIdentity);
     setStatus("success");
   }, [setErrorMessage]);
@@ -124,21 +123,23 @@ export function InternetIdentityProvider({
   );
 
   const login = useCallback(() => {
-    const authClient = authClientRef.current;
-    if (!authClient) {
+    const client = authClientRef.current;
+    if (!client) {
       setErrorMessage(
-        "AuthClient is not initialized yet, please wait a moment and try again.",
+        "AuthClient is not initialized yet, make sure to call login on user interaction.",
       );
       return;
     }
 
-    const currentIdentity = authClient.getIdentity();
+    const currentIdentity = client.getIdentity();
     if (
       !currentIdentity.getPrincipal().isAnonymous() &&
       currentIdentity instanceof DelegationIdentity &&
       isDelegationValid(currentIdentity.getDelegation())
     ) {
-      setErrorMessage("User is already authenticated");
+      // Already authenticated — restore identity and signal success
+      setIdentity(currentIdentity);
+      setStatus("success");
       return;
     }
 
@@ -150,23 +151,21 @@ export function InternetIdentityProvider({
     };
 
     setStatus("logging-in");
-    void authClient.login(options);
+    void client.login(options);
   }, [handleLoginError, handleLoginSuccess, setErrorMessage]);
 
   const clear = useCallback(() => {
-    const authClient = authClientRef.current;
-    if (!authClient) {
+    const client = authClientRef.current;
+    if (!client) {
       setErrorMessage("Auth client not initialized");
       return;
     }
 
-    void authClient
+    void client
       .logout()
       .then(() => {
         setIdentity(undefined);
-        // KEY FIX: Do NOT nullify authClientRef here.
-        // The client remains valid for the next login. Nullifying it would restart
-        // the initialization loop and break the login button after logout.
+        // Do NOT nullify authClientRef — the client stays alive so the button always works
         setStatus("idle");
         setError(undefined);
       })
@@ -180,23 +179,25 @@ export function InternetIdentityProvider({
       });
   }, [setErrorMessage]);
 
+  // This effect runs EXACTLY ONCE on mount — authClientRef is never in the dep array
   useEffect(() => {
-    // KEY FIX: Empty dependency array -- runs exactly ONCE on mount.
-    // authClient is a ref (not in deps), createOptions is accessed via ref.
-    // initializingRef guard prevents double-run in React StrictMode.
-    if (initializingRef.current) return;
+    if (initializingRef.current) return; // Guard against React StrictMode double-invoke
     initializingRef.current = true;
 
     void (async () => {
       try {
         setStatus("initializing");
-        const existingClient = await createAuthClient(createOptionsRef.current);
-        authClientRef.current = existingClient;
+        const client = await createAuthClient(createOptionsRef.current);
+        authClientRef.current = client;
 
-        const isAuthenticated = await existingClient.isAuthenticated();
+        const isAuthenticated = await client.isAuthenticated();
         if (isAuthenticated) {
-          const loadedIdentity = existingClient.getIdentity();
+          const loadedIdentity = client.getIdentity();
           setIdentity(loadedIdentity);
+          // Signal success so LoginPage redirect fires for returning users too
+          setStatus("success");
+        } else {
+          setStatus("idle");
         }
       } catch (unknownError) {
         setStatus("loginError");
@@ -205,11 +206,11 @@ export function InternetIdentityProvider({
             ? unknownError
             : new Error("Initialization failed"),
         );
-      } finally {
-        setStatus("idle");
       }
     })();
-  }, []); // Intentionally empty: runs once on mount only
+    // createOptionsRef is used instead of createOptions so we satisfy the linter
+    // without triggering re-initialization when the parent re-renders.
+  }, []);
 
   const value = useMemo<ProviderValue>(
     () => ({
